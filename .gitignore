@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# local history
+.history/
+.env
+
 # Distribution / packaging
 .Python
 build/
