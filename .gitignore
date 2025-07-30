@@ -8,6 +8,7 @@ __pycache__/
 
 # local history
 .history/
+.env
 
 # Distribution / packaging
 .Python
