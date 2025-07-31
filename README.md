@@ -84,4 +84,28 @@ We are committed to delivering a platform that is not just a marketplace for ide
 - Regular feedback from both user groups (startups and investors) should be incorporated.
 
 
+## Code Quality – Pylint
 
+**Step 1: Installation**
+
+**Action**: Install pylint and pylint-django via pip. Pylint-django is a Pylint plugin that understands Django's structure and provides relevant linting.
+
+**Command:**
+
+pip install pylint pylint-django
+
+**Step 2: Running the linter**
+
+**Action**: To check your code with Pylint, run the following command from the project root
+
+**Command:**
+
+pylint --load-plugins pylint_django backend/
+
+Replace backend/ with the name of your Django project folder if it differs.
+
+
+**GitHub Actions**
+
+Pylint is also run automatically on each push or pull request to the developer branch using GitHub Actions.
+You can find the configuration in .github/workflows/pylint.yml.
