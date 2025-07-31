@@ -1,3 +1,9 @@
+import { Header } from "./components/composed/Header";
+
 export function Root() {
-  return <>StartHub</>;
+  return (
+    <main>
+      <Header />
+    </main>
+  );
 }
