@@ -37,7 +37,7 @@ export const Search = () => {
             handleSubmitSearch();
           }
         }}
-        className="border-none my-[1px] shadow-none outline-0 focus-visible:ring-0 px-2"
+        className="border-none my-[1px] shadow-none outline-0 focus-visible:ring-0 px-2 placeholder:text-main-gray-90 font-display font-light"
       />
       <div className="border-l border-inactive-100">
         <Button
