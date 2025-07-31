@@ -10,44 +10,39 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "text-main-white bg-main-gray-100 hover:bg-primary-hover disabled:bg-inactive-80 disabled:text-inactive-100",
+          "px-4 py-2.5 text-main-white bg-main-gray-100 hover:bg-primary-hover disabled:bg-inactive-80 disabled:text-inactive-100",
         destructive:
-          "text-main-white bg-primary-red hover:bg-primary-red-hover disabled:bg-inactive-80 disabled:text-inactive-100",
+          "px-4 py-2.5 text-main-white bg-primary-red hover:bg-primary-red-hover disabled:bg-inactive-80 disabled:text-inactive-100",
         secondary:
-          "text-secondary-black hover:bg-secondary-beige outline-1 outline-secondary-black disabled:bg-inactive-80 disabled:text-inactive-100 disabled:outline-inactive-100",
+          "px-4 py-2.5 text-secondary-black hover:bg-secondary-beige outline-1 outline-secondary-black disabled:bg-inactive-80 disabled:text-inactive-100 disabled:outline-inactive-100",
         tertiary:
           "text-main-black hover:underline hover:underline-offset-4 disabled:no-underline",
-      },
-      size: {
-        default: "px-4 py-2.5",
       },
     },
     defaultVariants: {
       variant: "primary",
-      size: "default",
     },
   }
-)
+);
 
 function Button({
   className,
   variant,
-  size,
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
   }) {
-  const Comp = asChild ? Slot : "button"
+  const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, className }))}
       {...props}
     />
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };
