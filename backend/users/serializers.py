@@ -1,8 +1,45 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
+from .models import UserProfile
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email']
+        
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+	
+    class Meta:
+        model = UserProfile
+        fields = [
+            'username', 'email', 'password', 'confirm_password',
+            'first_name', 'last_name', 'phone', 'role'
+        ]
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
+
+    def validate(self, data):
+        if data['password'] != data['confirm_password']:
+            raise serializers.ValidationError({"password": "Паролі не збігаються."})
+        return data
+		
+    def validate_email(self, value):
+        if UserProfile.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Електронна адреса вже використовується.")
+        return value
+
+    def validate_username(self, value):
+        if UserProfile.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Ім'я користувача вже зайняте.")
+        return value
+
+    def create(self, validated_data):
+        validated_data.pop('confirm_password')
+        password = validated_data.pop('password')
+        return UserProfile.objects.create_user(password=password, **validated_data)
