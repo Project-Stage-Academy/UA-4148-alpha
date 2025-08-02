@@ -8,7 +8,11 @@ class UserRole(models.Model):
         return self.role
     
 class UserProfileManager(BaseUserManager):
+    """Managing class for the UserProfile model"""
+    
     def create_user(self, email, password, **extra_fields):
+        """Creating a new user with low-level email validation as a protection against direct incorrect calling and validation of the django primary field before user authentication"""
+        
         if not email:
             raise ValueError("Email is required")
         email = self.normalize_email(email)
@@ -18,11 +22,15 @@ class UserProfileManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password, **extra_fields):
+        """Creating a superuser with additional administrator rights"""
+        
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
     
 class UserProfile(AbstractBaseUser, PermissionsMixin):
+    """Модель профілю користувача"""
+    
     username = models.CharField(max_length=150, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=150)
