@@ -1,3 +1,6 @@
+import { useSearchParams } from "react-router-dom";
+
 export function EnterprisesAndIndustries() {
-  return <div>Enterprises and industries</div>;
+  const [searchParams] = useSearchParams();
+  return <div>Enterprises and industries {searchParams.get("search")}</div>;
 }
