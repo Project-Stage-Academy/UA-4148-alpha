@@ -43,9 +43,6 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
 
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
     objects = UserProfileManager()
 
     USERNAME_FIELD = 'email'
