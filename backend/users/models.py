@@ -29,15 +29,14 @@ class UserProfileManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
     
 class UserProfile(AbstractBaseUser, PermissionsMixin):
-    """Модель профілю користувача"""
+    """User profile model"""
     
-    username = models.CharField(max_length=150, unique=True)
+    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(null=True, blank=True)
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
 
     is_active = models.BooleanField(default=True)

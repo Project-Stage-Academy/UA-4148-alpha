@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-AUTH_USER_MODEL = 'users.UserProfile'
 
 import os
 from pathlib import Path
@@ -33,6 +32,8 @@ SECRET_KEY = env('DJANGO_SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=["127.0.0.1", "localhost"])
+
+AUTH_USER_MODEL = 'users.UserProfile'
 
 # Application definition
 

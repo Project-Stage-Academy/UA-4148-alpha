@@ -1,4 +1,3 @@
-# from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import UserProfile
@@ -38,14 +37,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         """Checking the uniqueness of an email address."""
         
-        if UserProfile.objects.filter(email=value).exists():
+        if UserProfile.objects.filter(email_iexact=value).exists():
             raise serializers.ValidationError("Електронна адреса вже використовується.")
         return value
 
     def validate_username(self, value):
         """Checking the uniqueness of the username."""
         
-        if UserProfile.objects.filter(username=value).exists():
+        if UserProfile.objects.filter(username_iexact=value).exists():
             raise serializers.ValidationError("Ім'я користувача вже зайняте.")
         return value
 

@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.contrib.auth.models import User
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -14,7 +13,9 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     
 def send_confirmation_email(user):
-    """For email sending"""
+    """Method for sending a letter to email"""
+    
+    # TODO: Implement the email sending logic
     
     print(f"[Email] Confirmation sent to: {user.email}")
     
