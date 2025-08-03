@@ -18,7 +18,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'username', 'email', 'password', 'confirm_password',
-            'first_name', 'last_name', 'phone', 'role'
+            'first_name', 'last_name', 'role'
         ]
 
     def validate_password(self, value):
