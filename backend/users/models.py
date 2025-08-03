@@ -32,10 +32,9 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     """User profile model"""
     
     username = models.CharField(max_length=150, unique=True, blank=True, null=True)
-    email = models.EmailField(max_length=255, unique=True)
+    email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
-    phone = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
 

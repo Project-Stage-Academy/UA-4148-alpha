@@ -10,6 +10,10 @@ __pycache__/
 .history/
 .env
 
+**/migrations/*.py
+**/migrations/*.pyc
+!**/migrations/__init__.py
+
 # Distribution / packaging
 .Python
 build/
