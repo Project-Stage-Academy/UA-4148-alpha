@@ -31,11 +31,6 @@ class UserProfileManager(BaseUserManager):
 class UserProfile(AbstractBaseUser, PermissionsMixin):
     """User profile model"""
     
-    class Meta:
-        verbose_name = 'User Profile'
-        verbose_name_plural = 'User Profiles'
-        ordering = ['-created_at']
-    
     username = models.CharField(max_length=150, unique=True, blank=True, null=True)
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=150)
@@ -47,6 +42,11 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+    
+    class Meta:
+        verbose_name = 'User Profile'
+        verbose_name_plural = 'User Profiles'
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.email
