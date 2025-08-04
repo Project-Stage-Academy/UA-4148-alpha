@@ -31,21 +31,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         """Password compliance check"""
         
         if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({"password": "Паролі не збігаються."})
+            raise serializers.ValidationError({"password": "The passwords do not match."})
         return data
 		
     def validate_email(self, value):
         """Checking the uniqueness of an email address."""
         
         if UserProfile.objects.filter(email_iexact=value).exists():
-            raise serializers.ValidationError("Електронна адреса вже використовується.")
+            raise serializers.ValidationError("The email address is already in use.")
         return value
 
     def validate_username(self, value):
         """Checking the uniqueness of the username."""
         
         if UserProfile.objects.filter(username_iexact=value).exists():
-            raise serializers.ValidationError("Ім'я користувача вже зайняте.")
+            raise serializers.ValidationError("The username is already taken.")
         return value
 
     def create(self, validated_data):
