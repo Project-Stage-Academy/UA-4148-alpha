@@ -4,7 +4,6 @@ from utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
     TokenVerificationSerializer,
-    UserSerializer,
     PasswordResetSerializer
 )
 from rest_framework.response import Response
@@ -14,9 +13,7 @@ from django.core.mail import send_mail
 
 User = get_user_model()
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
+class UserViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'], url_path='validate-reset-token')
     def validate_reset_token(self, request):
