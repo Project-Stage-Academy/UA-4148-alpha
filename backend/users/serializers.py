@@ -2,18 +2,17 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import UserProfile
 
-
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ['username', 'email']
-        
+        fields = ['username', 'email', 'first_name', 'last_name', 'role']
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for user registration"""
     
-    password = serializers.CharField(write_only=True)
-    confirm_password = serializers.CharField(write_only=True)
-	
+    password = serializers.CharField(write_only=True, required=True)
+    confirm_password = serializers.CharField(write_only=True, required=True)
+
     class Meta:
         model = UserProfile
         fields = [
@@ -27,30 +26,29 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validate_password(value)
         return value
 
-    def validate(self, data):
-        """Password compliance check"""
-        
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({"password": "The passwords do not match."})
-        return data
-		
     def validate_email(self, value):
         """Checking the uniqueness of an email address."""
         
-        if UserProfile.objects.filter(email_iexact=value).exists():
+        if UserProfile.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("The email address is already in use.")
         return value
 
     def validate_username(self, value):
         """Checking the uniqueness of the username."""
         
-        if UserProfile.objects.filter(username_iexact=value).exists():
+        if UserProfile.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError("The username is already taken.")
         return value
 
+    def validate(self, data):
+        """Ensure password and confirm_password match"""
+        if data.get('password') != data.get('confirm_password'):
+            raise serializers.ValidationError({"password": "The passwords do not match."})
+        return data
+
     def create(self, validated_data):
-        """Creating a new user"""
-        
+        """Create user with hashed password and remove confirm_password"""
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
-        return UserProfile.objects.create_user(password=password, **validated_data)
+        user = UserProfile.objects.create_user(password=password, **validated_data)
+        return user
