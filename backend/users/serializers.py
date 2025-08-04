@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from backend.users.utils import verify_reset_token
+from django.contrib.auth.password_validation import validate_password
 
 User = get_user_model()
 
@@ -9,7 +10,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         model = User
         fields = ['username', 'email']
         
-class PasswordResetSerializer(serializers.Serializer):
+class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class TokenVerificationSerializer(serializers.Serializer):
@@ -45,6 +46,11 @@ class PasswordResetSubmissionSerializer(serializers.Serializer):
 
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match.")
+        
+        try:
+            validate_password(password, user)
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({'password': e.messages})
 
         user = User.objects.filter(email=email).first()
         if not user:
