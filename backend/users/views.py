@@ -1,19 +1,35 @@
 from rest_framework import viewsets, status
-from django.contrib.auth import get_user_model
 from utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
     TokenVerificationSerializer,
-    PasswordResetRequestSerializer
+    PasswordResetRequestSerializer,
+    UserRegistrationSerializer
 )
+from users.models import UserProfile
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.conf import settings
 from django.core.mail import send_mail
 
-User = get_user_model()
-
 class UserViewSet(viewsets.ViewSet):
+
+    @action(detail=False, methods=['post'], url_path='register')
+    def register(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user = serializer.save()
+            # TODO: Implement the email sending logic
+
+            # TODO: tokens
+            return Response({
+                "message": "Registration successful.",
+                "user_id": user.id,
+                "email": user.email,
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='validate-reset-token')
     def validate_reset_token(self, request):
@@ -37,7 +53,7 @@ class UserViewSet(viewsets.ViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data['email']
-        user = User.objects.filter(email=email).first()
+        user = UserProfile.objects.filter(email=email).first()
         if user:
             token = generate_password_reset_token(user)
             reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
