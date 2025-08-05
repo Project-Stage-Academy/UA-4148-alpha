@@ -85,4 +85,5 @@ We are committed to delivering a platform that is not just a marketplace for ide
 
 ### Database Schema
 
-![alt text](starthub.png)
+<img width="1470" height="725" alt="starthub" src="https://github.com/user-attachments/assets/d4c57b19-6e73-4988-b43a-37601a3110c8" />
+
