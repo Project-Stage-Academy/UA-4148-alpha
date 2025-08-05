@@ -1,10 +1,10 @@
-from django.urls import path
-from .views import SubscriptionCreateView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ProjectViewSet
+
+router = DefaultRouter()
+router.register(r'projects', ProjectViewSet, basename='project')
 
 urlpatterns = [
-    path(
-        "<int:project_id>/subscribe/",
-        SubscriptionCreateView.as_view(),
-        name="subscribe-to-project"
-    ),
+    path('', include(router.urls)),
 ]
