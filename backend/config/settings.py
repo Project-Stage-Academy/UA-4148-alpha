@@ -33,6 +33,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=["127.0.0.1", "localhost"])
 
+AUTH_USER_MODEL = 'users.UserProfile'
+
 # Application definition
 
 INSTALLED_APPS = [
