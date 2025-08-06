@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Root } from "../Root";
 import { About } from "@/pages/About";
 import { EnterprisesAndIndustries } from "@/pages/EnterprisesAndIndustries";
+import { SignIn } from "@/pages/auth/SignIn";
 
 const routes = createBrowserRouter([
   {
@@ -15,6 +16,10 @@ const routes = createBrowserRouter([
       {
         path: "/enterprises-and-industries",
         element: <EnterprisesAndIndustries />,
+      },
+      {
+        path: "/signin",
+        element: <SignIn />,
       },
     ],
   },
