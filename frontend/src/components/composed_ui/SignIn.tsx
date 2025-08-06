@@ -11,6 +11,7 @@ import { Input } from "../ui/input";
 import type { UseFormReturn } from "react-hook-form";
 import type { SignInFormValues } from "@/pages/auth/SignIn";
 import { Link } from "react-router-dom";
+import { PasswordInput } from "../composed/PasswordInput";
 
 interface SignInFormProps {
   form: UseFormReturn<SignInFormValues>;
@@ -44,7 +45,7 @@ export function SignInForm({ form }: SignInFormProps) {
             <FormItem className="gap-1">
               <FormLabel>Пароль</FormLabel>
               <FormControl>
-                <Input
+                <PasswordInput
                   className="shadow-none border border-inactive-100 rounded-sm flex focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]"
                   placeholder="Введіть пароль"
                   {...field}
