@@ -28,6 +28,7 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('DJANGO_SECRET_KEY')
 AUTH_USER_MODEL = 'users.UserProfile'
+AUTHENTICATION_BACKENDS = ['users.utils.backends.EmailBackend']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework_simplejwt',
 
     'users',
     'profiles',
@@ -54,6 +56,12 @@ INSTALLED_APPS = [
     'communications',
     'dashboard',
 ]
+
+REST_FRAMEWORK  = {
+    'DАFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.JWTAuthentication',
+    ]
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
