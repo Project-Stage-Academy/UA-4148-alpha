@@ -10,6 +10,7 @@ import {
 import { Input } from "../ui/input";
 import type { UseFormReturn } from "react-hook-form";
 import type { SignInFormValues } from "@/pages/auth/SignIn";
+import { Link } from "react-router-dom";
 
 interface SignInFormProps {
   form: UseFormReturn<SignInFormValues>;
@@ -53,7 +54,9 @@ export function SignInForm({ form }: SignInFormProps) {
             </FormItem>
           )}
         />
-        <Button variant={"tertiary"} className="self-end">Забули пароль?</Button>
+        <Button variant={"tertiary"} className="self-end">
+          <Link to="/forgot-password" className="text-sm">Забули пароль?</Link>
+        </Button>
       </div>
     </div>
   );
