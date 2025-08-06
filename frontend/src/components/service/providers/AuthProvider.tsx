@@ -44,7 +44,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const logout = useCallback(() => {
     setUser(null);
     setAccessToken(null);
-    setRefreshToken("");
+    setRefreshToken(null);
     localStorage.clear();
   }, []);
 

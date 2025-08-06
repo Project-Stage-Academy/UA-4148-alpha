@@ -8,7 +8,7 @@ export function AuthButtons() {
     <div className="flex items-center gap-6">
       {auth.user ? (
         <Button variant="tertiary" asChild>
-          <Link to="/signin">Мій профіль</Link>
+          <Link to="/profile">Мій профіль</Link>
         </Button>
       ) : (
         <>

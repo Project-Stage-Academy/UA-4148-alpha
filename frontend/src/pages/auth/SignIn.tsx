@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSignInMutate } from "@/hooks/useSignInMutate";
-import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/hooks/useAuthContext";
 import { useEffect } from "react";
 
@@ -19,7 +18,6 @@ const signInSchema = z.object({
 export type SignInFormValues = z.infer<typeof signInSchema>;
 
 export function SignIn() {
-  const navigate = useNavigate();
   const auth = useAuthContext();
   const signIn = useSignInMutate();
   const form = useForm<SignInFormValues>({
@@ -33,9 +31,9 @@ export function SignIn() {
 
   useEffect(() => {
     if (auth?.user) {
-      navigate("/profile");
+      // TODO: navigate to user profile or dashboard when route available
     }
-  }, [auth?.user, navigate]);
+  }, [auth?.user]);
 
   const { isValid, isSubmitting } = form.formState;
 
