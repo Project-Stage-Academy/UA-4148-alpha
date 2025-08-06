@@ -1,0 +1,24 @@
+import axios from "./index";
+
+export interface SignInData {
+  email: string;
+  password: string;
+}
+
+export interface SignInResponse {
+  refresh: string;
+  access: string;
+  user: {
+    id: number;
+    email: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+    role: null | string;
+  };
+}
+
+export async function signIn(data: SignInData): Promise<SignInResponse> {
+  const response = await axios.post<SignInResponse>("/auth/signin/", data);
+  return response.data;
+}
