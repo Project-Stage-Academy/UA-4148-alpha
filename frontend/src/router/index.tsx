@@ -4,6 +4,7 @@ import { About } from "@/pages/About";
 import { EnterprisesAndIndustries } from "@/pages/EnterprisesAndIndustries";
 import { SignIn } from "@/pages/auth/SignIn";
 import { ForgotPassword } from "@/pages/auth/ForgotPassword";
+import { PasswordRecoveryEmailSent } from "@/pages/auth/PasswordRecoveryEmailSent";
 
 const routes = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const routes = createBrowserRouter([
       {
         path: "/forgot-password",
         element: <ForgotPassword />,
+      },
+      {
+        path: "/password-recovery-email-sent",
+        element: <PasswordRecoveryEmailSent />,
       },
     ],
   },
