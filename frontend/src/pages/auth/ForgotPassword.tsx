@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ForgotPasswordForm } from "@/components/composed_ui/ForgotPassword";
 import { Link } from "react-router-dom";
+import { useForgotPasswordMutate } from "@/hooks/useForgotPasswordMutate";
 
 const forgotPasswordSchema = z.object({
   email: z
@@ -15,6 +16,7 @@ const forgotPasswordSchema = z.object({
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPassword() {
+  const forgotPassword = useForgotPasswordMutate();
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     mode: "onChange",
@@ -27,7 +29,7 @@ export function ForgotPassword() {
 
   const handleForgotPassword = async (data: ForgotPasswordFormValues) => {
     try {
-      console.log(data);
+      await forgotPassword.mutateAsync(data);
     } catch (error: unknown) {
       form.setError("email", {
         type: "manual",
