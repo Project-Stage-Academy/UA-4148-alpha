@@ -5,7 +5,9 @@ export function Root() {
   return (
     <main className="bg-main-bg h-full">
       <Header />
-      <Outlet />
+      <div className="-my-[77px]">
+        <Outlet />
+      </div>
     </main>
-  );  
+  );
 }
