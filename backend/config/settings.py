@@ -142,7 +142,7 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FRONTEND_URL="http://localhost:5173"
+FRONTEND_URL=env("FRONTEND_URL")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL="noreply@localhost"
+DEFAULT_FROM_EMAIL=env("DEFAULT_FROM_EMAIL")
