@@ -18,7 +18,7 @@ class TestUserLogin:
             first_name="Test",
             last_name="User"
         )
-        self.url = reverse('user-login')  # Вказати точну назву маршруту з urls.py
+        self.url = reverse('user-login')  
 
     def test_login_success(self):
         data = {
