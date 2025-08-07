@@ -1,35 +1,22 @@
 
 from django.shortcuts import render, redirect
 from .models import UserProfile
-from rest_framework import viewsets
-from users.serializers import UserSerializer
 from rest_framework.decorators import action
-
 from rest_framework import viewsets, status
-from utils import generate_password_reset_token
+
+from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
     TokenVerificationSerializer,
     PasswordResetRequestSerializer,
     UserRegistrationSerializer
 )
-from users.models import UserProfile
 from rest_framework.response import Response
-from rest_framework.decorators import action
 from django.conf import settings
 from django.core.mail import send_mail
 
 from django.contrib.auth import authenticate
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-# Create your views here.
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
-    
-    
 
 class UserViewSet(viewsets.ViewSet):
 
@@ -49,11 +36,17 @@ class UserViewSet(viewsets.ViewSet):
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-class UserLoginView(APIView):
-    def post(self, request):
+    
+    @action(detail=False, methods=['post'], url_path='login')
+    def login(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
 
+        if not email or not password:
+            return Response(
+                {"detail": "Email and password are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         user = authenticate(email=email, password=password)
         
         if user is not None:

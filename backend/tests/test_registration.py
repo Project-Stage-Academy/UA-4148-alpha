@@ -60,8 +60,6 @@ class TestUserRegistration:
 
         assert response.status_code == 400
         assert "email" in response.data
-        # Перевіряємо, що у повідомленнях під ключем email є хоч якийсь текст
         assert len(response.data["email"]) > 0
-        # І що в першому повідомленні міститься частина тексту, яка ти очікуєш
         assert any("already in use" in str(msg).lower() or "exists" in str(msg).lower() for msg in response.data["email"])
 

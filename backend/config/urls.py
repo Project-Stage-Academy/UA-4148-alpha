@@ -27,7 +27,6 @@ router.register(r'users', UserViewSet, basename='user')
 urlpatterns = [
     path('', include(router.urls)),
     path('admin/', admin.site.urls),
-    path('api/auth/', include('users.urls')),
 ]
 
 if settings.DEBUG:
