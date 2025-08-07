@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { useValidToken } from "@/hooks/useValidToken";
+import { usePasswordRestoreMutate } from "@/hooks/usePasswordRestoreMutate";
 
 const passwordRequirements =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -25,13 +26,13 @@ const restorePasswordSchema = z
       .min(8, "Пароль повинен містити щонайменше 8 символів"),
   })
   .refine((data) => data.password === data.confirm_password, {
-    message:
-      "Паролі не співпадають. Будь ласка, введіть однакові паролі в обидва поля",
+    message: "Паролі не співпадають.",
     path: ["confirm_password"],
   });
 export type RestorePasswordFormValues = z.infer<typeof restorePasswordSchema>;
 
 export function RestorePassword() {
+  const restorePassword = usePasswordRestoreMutate();
   const restoreTokenValidQuery = useValidToken();
   const [params] = useSearchParams();
   const form = useForm<RestorePasswordFormValues>({
@@ -47,9 +48,9 @@ export function RestorePassword() {
 
   const handleRestorePassword = async (data: RestorePasswordFormValues) => {
     try {
-      console.log(data);
+      await restorePassword.mutateAsync(data);
     } catch (error: unknown) {
-      form.setError("password", {
+      form.setError("confirm_password", {
         type: "manual",
         message: error instanceof Error ? error.message : "Невідома помилка",
       });
@@ -82,7 +83,9 @@ export function RestorePassword() {
           asChild
           className="font-display text-sm font-semibold hover:no-underline"
         >
-          <Link to="/signin" className="underline">Повернутися до входу</Link>
+          <Link to="/signin" className="underline">
+            Повернутися до входу
+          </Link>
         </Button>
       </div>
     </div>

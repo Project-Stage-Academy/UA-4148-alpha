@@ -38,7 +38,7 @@ class UserViewSet(viewsets.ViewSet):
             return Response({ "valid": True, "message": "Token is valid" }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path='reset_password_submission')
+    @action(detail=False, methods=['post'], url_path='reset-password-submission')
     def verify_token(self, request):
         serializer = PasswordResetSubmissionSerializer(data=request.data)
         if serializer.is_valid():
