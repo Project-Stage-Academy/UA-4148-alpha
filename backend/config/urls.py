@@ -28,6 +28,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('admin/', admin.site.urls),
     path('api/auth/', include('users.urls')),
+    path('chat/', include('communications.urls')),
 ]
 
 if settings.DEBUG:
