@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/composed_ui/Form";
 import { RestorePasswordForm } from "@/components/composed_ui/RestorePassword";
 import { Button } from "@/components/ui/button";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { useValidToken } from "@/hooks/useValidToken";
 
@@ -61,21 +61,30 @@ export function RestorePassword() {
     if (token) {
       restoreTokenValidQuery.mutate({
         token,
-      })
+      });
     }
   }, [params, restoreTokenValidQuery]);
 
   return (
     <div className="px-2 mx-auto flex items-center justify-center h-screen">
-      <Form form={form} onSubmit={handleRestorePassword}>
-        <Form.Header title="Відновлення паролю" />
-        <Form.Body>
-          <RestorePasswordForm form={form} />
-        </Form.Body>
-        <Form.Footer>
-          <Button disabled={!isValid || isSubmitting}>Зберегти пароль</Button>
-        </Form.Footer>
-      </Form>
+      <div className="flex flex-col gap-6">
+        <Form form={form} onSubmit={handleRestorePassword}>
+          <Form.Header title="Відновлення паролю" />
+          <Form.Body>
+            <RestorePasswordForm form={form} />
+          </Form.Body>
+          <Form.Footer>
+            <Button disabled={!isValid || isSubmitting}>Зберегти пароль</Button>
+          </Form.Footer>
+        </Form>
+        <Button
+          variant={"tertiary"}
+          asChild
+          className="font-display text-sm font-semibold hover:no-underline"
+        >
+          <Link to="/signin" className="underline">Повернутися до входу</Link>
+        </Button>
+      </div>
     </div>
   );
 }
