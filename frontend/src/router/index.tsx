@@ -4,6 +4,7 @@ import { About } from "@/pages/About";
 import { EnterprisesAndIndustries } from "@/pages/EnterprisesAndIndustries";
 import { SignIn } from "@/pages/auth/SignIn";
 import { RestorePassword } from "@/pages/auth/RestorePassword";
+import { PasswordRestoreSuccess } from "@/pages/auth/PasswordRestoreSuccess";
 
 const routes = createBrowserRouter([
   {
@@ -26,6 +27,10 @@ const routes = createBrowserRouter([
         path: "/restore-password",
         element: <RestorePassword />,
       },
+      {
+        path: "/password-restore-success",
+        element: <PasswordRestoreSuccess />,
+      }
     ],
   },
 ]);
