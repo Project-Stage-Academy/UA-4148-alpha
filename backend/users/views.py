@@ -6,7 +6,7 @@ from users.serializers import UserSerializer
 from rest_framework.decorators import action
 
 from rest_framework import viewsets, status
-from utils import generate_password_reset_token
+from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
     TokenVerificationSerializer,
