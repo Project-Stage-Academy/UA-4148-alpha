@@ -9,6 +9,6 @@ export interface ResetPasswordResponse {
 }
 
 export async function forgotPassword(data: ResetPasswordData): Promise<ResetPasswordResponse> {
-  const response = await axios.post<ResetPasswordResponse>("/users/password-reset/", data);
+  const response = await axios.post<ResetPasswordResponse>("/users/reset-password-request/", data);
   return response.data;
 }
