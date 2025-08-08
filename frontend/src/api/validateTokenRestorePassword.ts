@@ -12,7 +12,7 @@ export async function validateTokenRestorePassword(
   data: RestoreTokenData
 ): Promise<RestoreTokenResponse> {
   const response = await axios.post<RestoreTokenResponse>(
-    "/users/password-restore/",
+    "/users/validate-reset-token/",
     data
   );
   return response.data;
