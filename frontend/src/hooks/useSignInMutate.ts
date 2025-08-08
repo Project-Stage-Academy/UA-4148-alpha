@@ -13,6 +13,7 @@ export function useSignInMutate() {
     mutationFn: signIn,
     onSuccess: (data) => {
       auth?.login(data);
+      // TODO: Navigate to dashboard when implemented
     },
     onError: (error) => {
       if (error.response?.data.detail == "Invalid credentials") {
