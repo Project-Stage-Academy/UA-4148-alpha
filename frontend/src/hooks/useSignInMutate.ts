@@ -14,10 +14,10 @@ export function useSignInMutate() {
     onSuccess: (data) => {
       auth?.login(data);
     },
-    onError: () => {
-      throw new Error(
-        "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."
-      );
+    onError: (error) => {
+      if (error.response?.data.detail == "Invalid credentials") {
+        throw new Error("Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз.");
+      }
     },
   });
 }
