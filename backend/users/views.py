@@ -1,10 +1,7 @@
-
-from django.shortcuts import render, redirect
 from .models import UserProfile
 from rest_framework import viewsets
 from users.serializers import UserSerializer
 from rest_framework.decorators import action
-
 from rest_framework import viewsets, status
 from .utils import generate_password_reset_token
 from users.serializers import (
@@ -18,20 +15,22 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.conf import settings
 from django.core.mail import send_mail
-
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-# Create your views here.
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
-    
-    
-
+from rest_framework.permissions import IsAuthenticated
 class UserViewSet(viewsets.ViewSet):
+
+    @action(detail=False, methods=['get'], url_path='me', permission_classes=[IsAuthenticated])
+    def me(self, request):
+        user = request.user
+        if not user.is_authenticated:
+            return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='register')
     def register(self, request):
