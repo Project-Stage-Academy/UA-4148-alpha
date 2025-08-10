@@ -5,6 +5,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignUpForm } from "@/components/composed_ui/SignUp";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { useAuthContext } from "@/hooks/useAuthContext";
+import { useSignUpMutate } from "@/hooks/useSignUpMutate";
 
 enum Role {
   Startup = "1",
@@ -59,6 +62,8 @@ const signUpSchema = z
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export function SignUp() {
+  const auth = useAuthContext();
+  const signUp = useSignUpMutate();
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     mode: "onChange",
@@ -77,7 +82,7 @@ export function SignUp() {
 
   const handleSignUp = async (data: SignUpFormValues) => {
     try {
-      console.log(data);
+      await signUp.mutateAsync(data);
     } catch (error: unknown) {
       form.setError("password", {
         type: "manual",
@@ -85,6 +90,12 @@ export function SignUp() {
       });
     }
   };
+
+  useEffect(() => {
+    if (auth?.user) {
+      // TODO: navigate to user profile or dashboard when route available
+    }
+  }, [auth?.user]);
 
   return (
     <div className="mx-auto flex items-center justify-center h-screen">
