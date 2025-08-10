@@ -4,31 +4,45 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        """
+        Handles a new WebSocket connection.
+        Joins the user to the chat room group based on 'room_name' from the URL.
+        """
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
-        # join to room group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
 
     async def disconnect(self, close_code):
-        # leave the room group
+        """
+        Handles WebSocket disconnection.
+        Removes the user from the chat room group.
+        """
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-    # receive message from WebSocket
     async def receive(self, text_data=None, bytes_data=None):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        """
+        Receive a message from the WebSocket client.
+        Validates JSON format and presence of 'message' key,
+        then sends it to the room group.
+        """
+        try:
+            data = json.loads(text_data or '{}')
+            message = data.get('message')
+            if not message:
+                return
+        except json.JSONDecodeError:
+            return
 
-        # send message to room group
         await self.channel_layer.group_send(
-            self.room_group_name, {'type': 'chat.message', 'message': message}
+            self.room_group_name, {'type': 'chat_message', 'message': message}
         )
 
-    # receive message from room group
     async def chat_message(self, event):
+        """
+        Receives a message from the room group abd sends it to WebSocket clients.
+        """
         message = event['message']
-
-        # send message to WebSocket
         await self.send(text_data=json.dumps({'message': message}))

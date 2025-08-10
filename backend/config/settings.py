@@ -42,16 +42,14 @@ AUTH_USER_MODEL = 'users.UserProfile'
 INSTALLED_APPS = [
     'daphne',
     'channels',
+    'rest_framework',
+    'rest_framework_simplejwt',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'rest_framework',
-    'rest_framework_simplejwt',
-
     'users',
     'profiles',
     'projects',
