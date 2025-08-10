@@ -3,13 +3,57 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { SignUpForm } from "@/components/composed_ui/SignUp";
+import { Link } from "react-router-dom";
 
-const signUpSchema = z.object({
-  email: z
-    .string()
-    .email("Введіть адресу електронної пошти у форматі name@example.com"),
-  password: z.string().min(6, "Електронна пошта чи пароль вказані некоректно"),
-});
+enum Role {
+  Startup = "1",
+  Investor = "2",
+}
+
+const passwordRequirements =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+const signUpSchema = z
+  .object({
+    first_name: z.string().nonempty("Не ввели ім’я").trim(),
+    last_name: z.string().nonempty("Не ввели прізвище").trim(),
+    email: z
+      .string()
+      .email("Введіть адресу електронної пошти у форматі name@example.com")
+      .trim(),
+    password: z
+      .string()
+      .min(8, "Пароль повинен містити щонайменше 8 символів")
+      .regex(
+        passwordRequirements,
+        "Пароль має містити велику літеру, малу літеру, цифру та спеціальний символ"
+      ),
+    confirm_password: z
+      .string()
+      .min(8, "Пароль повинен містити щонайменше 8 символів")
+      .regex(
+        passwordRequirements,
+        "Пароль має містити велику літеру, малу літеру, цифру та спеціальний символ"
+      ),
+    role: z.enum(Role, {
+      error: "Виберіть кого ви представляєте",
+    }),
+  })
+  .superRefine(({ confirm_password, password }, ctx) => {
+    if (confirm_password !== password) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Паролі не співпадають.",
+        path: ["confirm_password"],
+      });
+      ctx.addIssue({
+        code: "custom",
+        message: "Паролі не співпадають.",
+        path: ["password"],
+      });
+    }
+  });
 
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
 
@@ -24,6 +68,7 @@ export function SignUp() {
   });
 
   const { isValid, isSubmitting } = form.formState;
+  console.log(form.getValues());
 
   const handleSignUp = async (data: SignUpFormValues) => {
     try {
@@ -37,15 +82,30 @@ export function SignUp() {
   };
 
   return (
-    <div className="px-2 mx-auto flex items-center justify-center h-screen">
-      <Form form={form} onSubmit={handleSignUp}>
-        <Form.Header title="Реєстрація" />
-        <Form.Body>
-        </Form.Body>
-        <Form.Footer>
-          <Button disabled={!isValid || isSubmitting}>Зареєструватися</Button>
-        </Form.Footer>
-      </Form>
+    <div className="mx-auto flex items-center justify-center h-screen">
+      <div className="flex flex-col gap-6">
+        <Form form={form} onSubmit={handleSignUp}>
+          <Form.Header title="Реєстрація" />
+          <Form.Body>
+            <SignUpForm form={form} />
+          </Form.Body>
+          <Form.Footer>
+            <Button disabled={!isValid || isSubmitting}>Зареєструватися</Button>
+          </Form.Footer>
+        </Form>
+        <div className="flex items-center justify-center gap-1.5">
+          <p className="text-center text-sm">Ви вже зареєстровані у нас?</p>
+          <Button
+            variant={"tertiary"}
+            asChild
+            className="font-display text-sm font-semibold hover:no-underline"
+          >
+            <Link to="/signin" className="underline">
+              Увійти
+            </Link>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
