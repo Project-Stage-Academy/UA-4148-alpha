@@ -18,6 +18,7 @@ const signUpSchema = z
   .object({
     first_name: z.string().nonempty("Не ввели ім’я").trim(),
     last_name: z.string().nonempty("Не ввели прізвище").trim(),
+    username: z.string().nonempty("Не ввели ім’я користувача").trim(),
     email: z
       .string()
       .email("Введіть адресу електронної пошти у форматі name@example.com")
@@ -64,11 +65,15 @@ export function SignUp() {
     defaultValues: {
       email: "",
       password: "",
+      confirm_password: "",
+      first_name: "",
+      last_name: "",
+      username: "",
+      role: undefined,
     },
   });
 
   const { isValid, isSubmitting } = form.formState;
-  console.log(form.getValues());
 
   const handleSignUp = async (data: SignUpFormValues) => {
     try {

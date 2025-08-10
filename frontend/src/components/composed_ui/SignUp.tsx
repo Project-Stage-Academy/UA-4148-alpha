@@ -113,6 +113,23 @@ export function SignUpForm({ form }: SignUpFormProps) {
       />
       <FormField
         control={form.control}
+        name="username"
+        render={({ field }) => (
+          <FormItem className="gap-1">
+            <FormLabel required>Ім‘я користувача чатiв</FormLabel>
+            <FormControl>
+              <Input
+                className="shadow-none border border-inactive-100 rounded-xs flex focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]"
+                placeholder="Введіть ім’я для чатiв"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
         name="role"
         render={({ field }) => {
           const roleValue = field.value;
