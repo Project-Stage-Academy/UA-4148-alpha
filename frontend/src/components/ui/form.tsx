@@ -85,21 +85,34 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+type LabelProps = React.ComponentProps<typeof LabelPrimitive.Root>;
+
 function FormLabel({
   className,
+  required,
   ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>) {
-  const { error, formItemId } = useFormField()
+}: LabelProps & { required?: boolean }) {
+  const { error, formItemId } = useFormField();
 
   return (
-    <Label
-      data-slot="form-label"
-      data-error={!!error}
-      className={className}
-      htmlFor={formItemId}
-      {...props}
-    />
-  )
+    <div
+      className={cn(
+        {
+          "flex items-center gap-2": required,
+        },
+        className
+      )}
+    >
+      {required && <span className="text-destructive">*</span>}
+      <Label
+        data-slot="form-label"
+        data-error={!!error}
+        className={className}
+        htmlFor={formItemId}
+        {...props}
+      />
+    </div>
+  );
 }
 
 function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
