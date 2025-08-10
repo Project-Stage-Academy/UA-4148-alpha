@@ -84,7 +84,34 @@ export function SignUp() {
     try {
       await signUp.mutateAsync(data);
     } catch (error: unknown) {
-      form.setError("password", {
+      if (typeof error === "object" && error !== null) {
+        if ("username" in error) {
+          form.setError("username", {
+            type: "manual",
+            message: "Це ім’я користувача вже використовується.",
+          });
+        }
+        if ("email" in error) {
+          form.setError("email", {
+            type: "manual",
+            message: "Ця електронна пошта вже використовується.",
+          });
+        }
+        if ("role" in error) {
+          form.setError("role", {
+            type: "manual",
+            message: "Виберіть роль, яку ви представляєте.",
+          });
+        }
+        if ("password" in error) {
+          form.setError("password", {
+            type: "manual",
+            message: "Пароль має містити велику літеру, малу літеру, цифру та спеціальний символ та бути не менше 8 символів.",
+          });
+        }
+        return;
+      }
+      form.setError("root", {
         type: "manual",
         message: error instanceof Error ? error.message : "Невідома помилка",
       });

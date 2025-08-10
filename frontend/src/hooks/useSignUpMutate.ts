@@ -7,20 +7,20 @@ export function useSignUpMutate() {
   const navigate = useNavigate();
   return useMutation<
     SignUpResponse,
-    AxiosError<{ detail: string }>,
+    AxiosError,
     SignUpData
   >({
     mutationFn: signUp,
     onSuccess: () => {
-      navigate("/sign-in");
+      navigate("/signin");
     },
     onError: (error) => {
       console.log(error);
       if (error.status && error.status >= 500) {
         throw new Error("Серверна помилка, спробуйте пізніше");
       }
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
+      if (error.response?.data) {
+        throw error.response?.data
       }
       throw new Error(
         "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."

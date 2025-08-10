@@ -19,7 +19,7 @@ export interface SignInResponse {
 }
 
 export async function signIn(data: SignInData): Promise<SignInResponse> {
-  const response = await axios.post<SignInResponse>("/auth/signin/", data);
+  const response = await axios.post<SignInResponse>("/auth/login/", data);
   return response.data;
 }
 
@@ -40,6 +40,6 @@ export interface SignUpResponse {
 }
 
 export async function signUp(data: SignUpData): Promise<SignUpResponse> {
-  const response = await axios.post<SignUpResponse>("/auth/signup/", data);
+  const response = await axios.post<SignUpResponse>("/users/register/", data);
   return response.data;
 }
