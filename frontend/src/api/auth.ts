@@ -19,6 +19,6 @@ export interface SignInResponse {
 }
 
 export async function signIn(data: SignInData): Promise<SignInResponse> {
-  const response = await axios.post<SignInResponse>("/auth/signin/", data);
+  const response = await axios.post<SignInResponse>("/auth/login/", data);
   return response.data;
 }

@@ -1,5 +1,5 @@
 import hashlib
-from backend.users.models import PasswordResetToken
+from users.models import PasswordResetToken
 
 def verify_reset_token(user, raw_token):
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
