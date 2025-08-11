@@ -14,7 +14,11 @@ export function useSignInMutate() {
     onSuccess: (data) => {
       auth?.login(data);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error(error);
+      if (error.response?.status === 500) {
+        throw new Error("Серверна помилка, спробуйте пізніше");
+      }
       throw new Error(
         "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."
       );
