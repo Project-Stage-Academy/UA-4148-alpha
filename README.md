@@ -83,8 +83,10 @@ We are committed to delivering a platform that is not just a marketplace for ide
 - Each user story can be broken down into smaller tasks and developed in sprints.
 - Regular feedback from both user groups (startups and investors) should be incorporated.
 
+### Database Schema
 
-## Code Quality – Pylint
+
+<img width="1470" height="725" alt="starthub" src="https://github.com/user-attachments/assets/d4c57b19-6e73-4988-b43a-37601a3110c8" />
 
 **Step 1: Installation**
 
