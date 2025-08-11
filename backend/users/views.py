@@ -1,9 +1,30 @@
+
+from django.shortcuts import render, redirect
 from rest_framework.decorators import action
 from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticated
+from utils import generate_password_reset_token
+from users.serializers import (
+    PasswordResetSubmissionSerializer,
+    TokenVerificationSerializer,
+    PasswordResetRequestSerializer,
+    UserRegistrationSerializer,
+    UserSerializer
+)
+from users.models import UserProfile
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from django.conf import settings
+from django.core.mail import send_mail
+from django.contrib.auth import authenticate
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import UserRegistrationSerializer, UserSerializer
+# Create your views here.
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all().order_by('-date_joined')
+    serializer_class = UserSerializer
+    
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -50,9 +71,65 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['post'], url_path='reset-password')
-    def reset_password(self, request):
-        """
-        Placeholder for password reset functionality.
-        """
-        return Response({"message": "Password reset not implemented yet."}, status=status.HTTP_501_NOT_IMPLEMENTED)
+class UserLoginView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        user = authenticate(email=email, password=password)
+        
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "username": user.username,
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "role": user.role.role if user.role else None
+                    }
+                }, status=status.HTTP_200_OK)
+    
+        else: 
+            return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+    @action(detail=False, methods=['post'], url_path='validate-reset-token')
+    def validate_reset_token(self, request):
+        serializer = TokenVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response({ "valid": True, "message": "Token is valid" }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], url_path='reset_password_submission')
+    def verify_token(self, request):
+        serializer = PasswordResetSubmissionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({ "message": 'Password reset successful' })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], url_path='password-reset')
+    def password_reset(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email']
+        user = UserProfile.objects.filter(email=email).first()
+        if user:
+            token = generate_password_reset_token(user)
+            reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+            send_mail(
+                subject='Reset your password',
+                message=f'Click the link to reset your password: {reset_url}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+            )
+
+        return Response({"message": "If the email exist, a reset link has been send."}, status=status.HTTP_200_OK)
+
