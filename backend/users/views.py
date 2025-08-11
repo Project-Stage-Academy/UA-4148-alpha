@@ -1,40 +1,53 @@
 
 from django.shortcuts import render, redirect
-from .models import UserProfile
-from rest_framework import viewsets
-from users.serializers import UserSerializer
 from rest_framework.decorators import action
-
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
+from rest_framework.permissions import IsAuthenticated
 from utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
     TokenVerificationSerializer,
     PasswordResetRequestSerializer,
-    UserRegistrationSerializer
+    UserRegistrationSerializer,
+    UserSerializer
 )
 from users.models import UserProfile
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.conf import settings
 from django.core.mail import send_mail
-
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+
 # Create your views here.
 class UserViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     
-    
 
 class UserViewSet(viewsets.ViewSet):
+    """
+    A ViewSet for handling user-related operations:
+    - Registration
+    - Viewing own profile
+    - Password reset (placeholder)
+    """
+
+    def get_permissions(self):
+        """
+        Set permissions dynamically based on action.
+        Public access allowed for registration and password reset.
+        """
+        if self.action in ['register', 'reset_password']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     @action(detail=False, methods=['post'], url_path='register')
     def register(self, request):
+        """
+        Register a new user.
+        """
         serializer = UserRegistrationSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -49,6 +62,15 @@ class UserViewSet(viewsets.ViewSet):
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], url_path='me')
+    def me(self, request):
+        """
+        Return the authenticated user's profile data.
+        """
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class UserLoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
