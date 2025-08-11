@@ -67,7 +67,7 @@ def test_password_reset_sends_email(settings):
     client = APIClient()
     user = UserProfile.objects.create_user(username="emailuser", email="email@example.com", password="pass")
 
-    response = client.post("/users/password-reset/", { "email": "email@example.com" })
+    response = client.post("/users/reset-password/", { "email": "email@example.com" })
     assert response.status_code == 200
     assert len(mail.outbox) == 1
     assert "reset" in mail.outbox[0].subject.lower()
@@ -78,7 +78,7 @@ def test_password_reset_submission_valid():
     user = UserProfile.objects.create_user(username="reseter", email="reseter@example.com", password="123Pass!!")
     token = generate_password_reset_token(user)
 
-    response = client.post("/users/reset_password_submission/", {
+    response = client.post("/users/reset-password-request/", {
         "email": user.email,
         "token": token,
         "password": "NewStrongPass1!",
@@ -95,7 +95,7 @@ def test_password_reset_submission_mismatch_passwords():
     user = UserProfile.objects.create_user(username="reseter2", email="reseter2@example.com", password="123Pass!!")
     token = generate_password_reset_token(user)
 
-    response = client.post("/users/reset_password_submission/", {
+    response = client.post("/users/reset-password-request/", {
         "email": user.email,
         "token": token,
         "password": "Password1!",
