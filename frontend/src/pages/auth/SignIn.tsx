@@ -50,15 +50,24 @@ export function SignIn() {
 
   return (
     <div className="px-2 mx-auto flex items-center justify-center h-screen">
-      <Form form={form} onSubmit={handleSignIn}>
-        <Form.Header title="Вхід на платформу" />
-        <Form.Body>
-          <SignInForm form={form} />
-        </Form.Body>
-        <Form.Footer>
-          <Button disabled={!isValid || isSubmitting}>Увійти</Button>
-        </Form.Footer>
-      </Form>
+      <div className="flex flex-1 flex-col gap-6 items-center">
+        <Form form={form} onSubmit={handleSignIn}>
+          <Form.Header title="Вхід на платформу" />
+          <Form.Body>
+            <SignInForm form={form} />
+          </Form.Body>
+          <Form.Footer>
+            <Button disabled={!isValid || isSubmitting}>Увійти</Button>
+          </Form.Footer>
+        </Form>
+        <div className="font-display text-sm">
+          <span>Вперше на нашому сайті?</span>{" "}
+          {/* TODO: Link tag with to attribute and signup value */}
+          <Button variant={'tertiary'} className="underline font-semibold">
+            Зареєструйтесь
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
