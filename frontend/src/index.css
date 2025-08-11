@@ -1,7 +1,70 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 @custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-display: "Geologica", "sans-serif";
+
+  /* Main */
+  --color-main-gray-100: #000000;
+  --color-main-gray-90: #25292c;
+  --color-main-gray-80: #35383c;
+  --color-main-gray-70: #4f585f;
+  --color-main-gray-60: #6b747b;
+  --color-main-gray-50: #8d959c;
+  --color-main-gray-40: #a3aab0;
+  --color-main-gray-30: #bfc6cf;
+  --color-main-gray-20: #dee1e8;
+  --color-main-gray-10: #eeeff1;
+  --color-main-gray-5: #f8f8f8;
+  --color-main-white: #ffffff;
+  --color-main-black: #231c09;
+  --color-main-bg: #f9f5ec;
+
+  /* Primary */
+  --color-primary-green-100: #0b6c61;
+  --color-primary-green-80: #1f9a7c;
+  --color-primary-green-60: #40af85;
+  --color-primary-green-40: #99ddc3;
+  --color-primary-green-20: #effff6;
+
+  --color-primary-hover: #292929;
+
+  --color-primary-red: #e14e29;
+  --color-primary-red-hover: #f15831;
+
+  /* Secondary */
+  --color-secondary-black: #232424;
+  --color-secondary-beige: #f1e7d2;
+
+  /* Inactive */
+  --color-inactive-100: #a1a1a1;
+  --color-inactive-80: #e5e5e5;
+  --color-inactive-60: #ececec;
+
+  /* System */
+  --color-system-blue-100: #4a73e2;
+  --color-system-red-100: #f15831;
+  --color-system-orange-100: #ff9500;
+  --color-system-yellow-100: #ffd800;
+  --color-system-green-100: #27ae60;
+
+  /* Purple */
+  --color-purple-100: #8b77c6;
+  --color-purple-80: #a288e9;
+  --color-purple-60: #c4b4f1;
+  --color-purple-40: #d3c4fe;
+  --color-purple-20: #f4e4ff;
+
+  --shadow-xs: 0px 4px 8px 0px rgba(65, 64, 69, 0.2);
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
