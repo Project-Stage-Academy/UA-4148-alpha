@@ -92,15 +92,16 @@ class PasswordResetSubmissionSerializer(serializers.Serializer):
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match.")
         
+        user = UserProfile.objects.filter(email=email).first()
+        if not user:
+            raise serializers.ValidationError("Invalid email or token.")
+        
         try:
             validate_password(password, user)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'password': e.messages})
 
-        user = UserProfile.objects.filter(email=email).first()
-        if not user:
-            raise serializers.ValidationError("Invalid email or token.")
-        
+       
         is_valid, message = verify_reset_token(user, token)
         if not is_valid:
             raise serializers.ValidationError(message)
