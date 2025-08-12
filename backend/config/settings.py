@@ -187,6 +187,12 @@ CHANNEL_LAYERS = {
     },
 }
 
-MONGO_HOST = os.getenv("MONGO_HOST", "mongo")
-MONGO_PORT = int(os.getenv("MONGO_PORT", 27017))
-MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "chat_db")
+# MongoDB
+MONGO_HOST = env("MONGO_HOST")
+MONGO_PORT = env("MONGO_PORT", cast=int)
+MONGO_DB_NAME = env("MONGO_DB_NAME")
+
+mongoengine.connect(
+    db=MONGO_DB_NAME,
+    host=f"mongodb://{MONGO_HOST}:{MONGO_PORT}"
+)
