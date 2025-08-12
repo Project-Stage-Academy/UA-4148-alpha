@@ -35,4 +35,5 @@ jobs:
 
       - name: Run Pylint
         run: |
+          export PYTHONPATH=$(pwd)
           pylint --load-plugins pylint_django backend/
