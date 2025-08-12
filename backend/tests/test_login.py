@@ -3,11 +3,14 @@ from rest_framework.test import APIClient
 from django.urls import reverse
 from users.models import UserProfile, UserRole
 
+
+
 @pytest.mark.django_db
 class TestUserLogin:
 
     @pytest.fixture(autouse=True)
     def setup(self):
+        self.client = APIClient()
         self.role = UserRole.objects.create(role="tester")
         self.user = UserProfile.objects.create_user(
             username="testuser",
@@ -17,8 +20,8 @@ class TestUserLogin:
             first_name="Test",
             last_name="User"
         )
-        self.client = APIClient()
-        self.url = reverse('login')
+        self.url = reverse('user-login')  
+
     def test_login_success(self):
         data = {
             "email": "testuser@example.com",
@@ -32,6 +35,16 @@ class TestUserLogin:
         assert response.data["user"]["email"] == "testuser@example.com"
         assert response.data["user"]["role"] == "tester"
 
+    def test_login_missing_email_or_password(self):
+        response = self.client.post(self.url, {"password": "TestPass123!"}, format='json')
+        assert response.status_code == 400
+        assert response.data["detail"] == "Email and password are required."
+
+        
+        response = self.client.post(self.url, {"email": "testuser@example.com"}, format='json')
+        assert response.status_code == 400
+        assert response.data["detail"] == "Email and password are required."
+
     def test_login_wrong_password(self):
         data = {
             "email": "testuser@example.com",
@@ -43,7 +56,7 @@ class TestUserLogin:
 
     def test_login_nonexistent_user(self):
         data = {
-            "email": "testuser@example.com",
+            "email": "nonexistent@example.com",
             "password": "SomePassword"
         }
         response = self.client.post(self.url, data, format='json')
