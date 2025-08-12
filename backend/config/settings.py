@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
-
+import mongoengine
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,16 +46,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'corsheaders',
-    'rest_framework',
-    'rest_framework_simplejwt',
 
     'users',
     'profiles',
@@ -189,3 +186,7 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+MONGO_HOST = os.getenv("MONGO_HOST", "mongo")
+MONGO_PORT = int(os.getenv("MONGO_PORT", 27017))
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "chat_db")
