@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+</head>
+<body>
+    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
+    <input id="chat-message-input" type="text" size="100" placeholder="Type a message..."><br>
+    <input id="chat-message-submit" type="button" value="Send">
+    {{ room_name|json_script:"room-name" }}
+    <script>
+        let roomName = null;
+        try {
+            const roomNameEl = document.getElementById('room-name');
+            if (!roomNameEl) {
+                throw new Error("Room name has not been found");
+            }
+            roomName = JSON.parse(roomNameEl.textContent);
+        } catch (err) {
+            console.error("Error parsing room name:", err);
+        }
+
+        const chatLog = document.querySelector('#chat-log');
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const messageSubmitButton = document.querySelector('#chat-message-submit');
+
+        let chatSocket = null;
+        let reconnectDelay = 2000;
+
+        function appendLog(text) {
+            chatLog.value += text + '\n';
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function bindMessageEvents() {
+            if (!messageInputDom || !messageSubmitButton) return;
+
+            messageInputDom.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    messageSubmitButton.click();
+                }
+            });
+
+            messageSubmitButton.onclick = function() {
+                const message = messageInputDom.value.trim();
+                if (!message || chatSocket.readyState !== WebSocket.OPEN) return;
+
+                chatSocket.send(JSON.stringify({ message }));
+                messageInputDom.value = '';
+            };
+        }
+
+        function initChatSocket() {
+            if (!roomName) {
+                alert("Unable to join chat: missing room name.");
+                return;
+            }
+
+            const socketUrl = 'ws://' + window.location.host + '/ws/chat/' + encodeURIComponent(roomName) + '/';
+            chatSocket = new WebSocket(socketUrl);
+
+            chatSocket.onopen = () => {
+                reconnectDelay = 2000;
+                console.log("Connected to chat server");
+                appendLog("[Connected to chat]");
+                messageSubmitButton.disabled = false;
+            };
+
+            chatSocket.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data?.message) {
+                        appendLog(data.message);
+                    }
+                } catch (err) {
+                    console.error("Error parsing incoming WebSocket message:", err);
+                }
+            };
+
+            chatSocket.onclose = (e) => {
+                messageSubmitButton.disabled = true;
+                console.warn('Chat socket closed unexpectedly, reconnecting in ' + reconnectDelay / 1000 + 's...');
+                appendLog("[Disconnected, retrying in ${reconnectDelay / 1000} seconds...]");
+                setTimeout(() => {
+                    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+                    initChatSocket();
+                }, reconnectDelay);
+            };
+
+            chatSocket.onerror = (e) => {
+                console.error("WebSocket error", e);
+                chatSocket.close();
+            };
+        }
+        bindMessageEvents();
+        initChatSocket();
+    </script>
+</body>
+</html>

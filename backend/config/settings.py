@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+from datetime import timedelta
 import environ
 
 
@@ -40,16 +41,18 @@ AUTH_USER_MODEL = 'users.UserProfile'
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_yasg',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'rest_framework',
-    'rest_framework_simplejwt',
-
+    'corsheaders',
     'users',
     'profiles',
     'projects',
@@ -57,13 +60,25 @@ INSTALLED_APPS = [
     'dashboard',
 ]
 
-REST_FRAMEWORK  = {
-    'DАFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.JWTAuthentication',
-    ]
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    "SIGNING_KEY": env('DJANGO_SECRET_KEY'),
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
 }
 
 MIDDLEWARE = [
+    # CORS
+    'corsheaders.middleware.CorsMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,6 +86,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    env("FRONTEND_URL"),
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -91,7 +110,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -147,12 +165,27 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+# DRF configuration for authentication and permissions
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FRONTEND_URL=env("FRONTEND_URL")
+FRONTEND_URL = env("FRONTEND_URL")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL=env("DEFAULT_FROM_EMAIL")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
+# Channels
+ASGI_APPLICATION = "config.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
+
