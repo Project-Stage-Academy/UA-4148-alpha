@@ -17,7 +17,8 @@ def test_register_success():
         "last_name": "User",
         "role": ''
     }
-    response = client.post("/users/register/", data)
+    url = reverse("user-register")
+    response = client.post(url, data)
     assert response.status_code == 201
     assert UserProfile.objects.filter(email="test@example.com").exists()
 

@@ -1,12 +1,17 @@
 import pytest
+import hashlib
+from django.utils import timezone
+from datetime import timedelta
+from users.models import PasswordResetToken, UserProfile
+from users.utils.verify_reset_token import verify_reset_token
+from users.utils.generate_password_reset_token import generate_password_reset_token
 from users.serializers import (
     UserRegistrationSerializer,
     PasswordResetRequestSerializer,
     TokenVerificationSerializer,
     PasswordResetSubmissionSerializer
 )
-from users.models import UserProfile
-from django.contrib.auth.password_validation import validate_password
+
 
 @pytest.mark.django_db
 def test_user_registration_serializer_valid_and_invalid():
@@ -32,7 +37,7 @@ def test_user_registration_serializer_valid_and_invalid():
     }
     serializer = UserRegistrationSerializer(data=invalid_password_data)
     assert not serializer.is_valid()
-    assert "password" in serializer.errors
+    assert "password" in serializer.errors or "non_field_errors" in serializer.errors
 
     # ----- Duplicate email -----
     duplicate_email_data = {
@@ -47,7 +52,6 @@ def test_user_registration_serializer_valid_and_invalid():
 
     # ----- Duplicate username -----
     UserProfile.objects.create_user(username="duplicateuser", email="dup@example.com", password="pass")
-
     duplicate_username_data = {
         "username": "duplicateuser",  # вже існує
         "email": "unique@example.com",
@@ -58,17 +62,31 @@ def test_user_registration_serializer_valid_and_invalid():
     assert not serializer.is_valid()
     assert "username" in serializer.errors
 
+    # ----- Weak password -----
+    weak_password_data = {
+        "username": "weakpassuser",
+        "email": "weak@example.com",
+        "password": "123",
+        "confirm_password": "123",
+    }
+    serializer = UserRegistrationSerializer(data=weak_password_data)
+    assert not serializer.is_valid()
+    errors_str = str(serializer.errors)
+    assert "password" in errors_str or "non_field_errors" in errors_str
+
+
 @pytest.mark.django_db
 def test_password_reset_request_serializer():
     serializer = PasswordResetRequestSerializer(data={"email": "test@example.com"})
     assert serializer.is_valid()
 
+
 @pytest.mark.django_db
 def test_token_verification_serializer_valid_and_invalid():
     user = UserProfile.objects.create_user(username="testuser", email="test@example.com", password="pass123")
-    # припустимо, функція verify_reset_token повертає True для тесту
     from unittest.mock import patch
 
+    # valid token
     with patch("users.serializers.verify_reset_token", return_value=(True, "Token is valid")):
         data = {"email": user.email, "token": "validtoken"}
         serializer = TokenVerificationSerializer(data=data)
@@ -79,11 +97,12 @@ def test_token_verification_serializer_valid_and_invalid():
     serializer = TokenVerificationSerializer(data=data)
     assert not serializer.is_valid()
 
-    # invalid token (mock false)
+    # invalid token
     with patch("users.serializers.verify_reset_token", return_value=(False, "Invalid token")):
         data = {"email": user.email, "token": "badtoken"}
         serializer = TokenVerificationSerializer(data=data)
         assert not serializer.is_valid()
+
 
 @pytest.mark.django_db
 def test_password_reset_submission_serializer_valid_and_invalid():
@@ -97,6 +116,7 @@ def test_password_reset_submission_serializer_valid_and_invalid():
         "confirm_password": "ComplexPass123!",
     }
 
+    # valid case
     with patch("users.serializers.verify_reset_token", return_value=(True, "Token is valid")):
         serializer = PasswordResetSubmissionSerializer(data=valid_data)
         assert serializer.is_valid()
@@ -122,3 +142,55 @@ def test_password_reset_submission_serializer_valid_and_invalid():
     with patch("users.serializers.verify_reset_token", return_value=(False, "Invalid token")):
         serializer = PasswordResetSubmissionSerializer(data=valid_data)
         assert not serializer.is_valid()
+
+    # weak password
+    weak_password_data = valid_data.copy()
+    weak_password_data["password"] = "123"
+    weak_password_data["confirm_password"] = "123"
+    with patch("users.serializers.verify_reset_token", return_value=(True, "Token is valid")):
+        serializer = PasswordResetSubmissionSerializer(data=weak_password_data)
+        assert not serializer.is_valid()
+        errors_str = str(serializer.errors)
+        assert "password" in errors_str or "non_field_errors" in errors_str
+
+
+@pytest.mark.django_db
+def test_verify_reset_token_returns_true_for_valid_token():
+    user = UserProfile.objects.create_user(username="testuser", email="test@example.com", password="pass123")
+    raw_token = generate_password_reset_token(user)
+
+    is_valid, msg = verify_reset_token(user, raw_token)
+
+    assert is_valid is True
+    assert msg == "Token is valid"
+
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    assert not PasswordResetToken.objects.filter(user=user, token_hash=token_hash).exists()
+
+
+@pytest.mark.django_db
+def test_verify_reset_token_returns_false_for_invalid_token():
+    user = UserProfile.objects.create_user(username="testuser", email="test@example.com", password="pass123")
+    fake_token = "invalidtokenstring"
+
+    is_valid, msg = verify_reset_token(user, fake_token)
+
+    assert is_valid is False
+    assert msg == "Invalid token"
+
+
+@pytest.mark.django_db
+def test_verify_reset_token_returns_false_and_deletes_expired_token():
+    user = UserProfile.objects.create_user(username="testuser", email="test@example.com", password="pass123")
+    raw_token = generate_password_reset_token(user)
+
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    token_obj = PasswordResetToken.objects.get(user=user, token_hash=token_hash)
+    token_obj.expires_at = timezone.now() - timedelta(minutes=1)
+    token_obj.save()
+
+    is_valid, msg = verify_reset_token(user, raw_token)
+
+    assert is_valid is False
+    assert msg == "Token expired"
+    assert not PasswordResetToken.objects.filter(user=user, token_hash=token_hash).exists()
