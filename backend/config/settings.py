@@ -52,11 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'corsheaders',
-    'rest_framework',
-    'rest_framework_simplejwt',
-
     'users',
     'profiles',
     'projects',
@@ -169,15 +165,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+# DRF configuration for authentication and permissions
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FRONTEND_URL=env("FRONTEND_URL")
+FRONTEND_URL = env("FRONTEND_URL")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL=env("DEFAULT_FROM_EMAIL")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 # Channels
 ASGI_APPLICATION = "config.asgi.application"
@@ -189,3 +188,4 @@ CHANNEL_LAYERS = {
         },
     },
 }
+

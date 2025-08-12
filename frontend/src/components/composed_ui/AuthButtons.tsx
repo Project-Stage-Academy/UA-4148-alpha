@@ -15,7 +15,9 @@ export function AuthButtons() {
           <Button variant="tertiary" asChild>
             <Link to="/signin">Увійти</Link>
           </Button>
-          <Button>Зареєструватися</Button>
+          <Button>
+            <Link to="/signup">Зареєструватися</Link>
+          </Button>
         </>
       )}
     </div>
