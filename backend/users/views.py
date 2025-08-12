@@ -3,6 +3,10 @@ from django.shortcuts import render, redirect
 from .models import UserProfile
 from rest_framework.decorators import action
 from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions
+
+
 
 from .utils import generate_password_reset_token
 from users.serializers import (

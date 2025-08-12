@@ -5,6 +5,8 @@ from users.models import UserProfile
 from django.core import mail
 from users.utils import generate_password_reset_token
 
+
+
 @pytest.mark.django_db
 def test_register_success():
     client = APIClient()
