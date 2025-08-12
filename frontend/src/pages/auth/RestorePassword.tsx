@@ -23,7 +23,11 @@ const restorePasswordSchema = z
       ),
     confirm_password: z
       .string()
-      .min(8, "Пароль повинен містити щонайменше 8 символів"),
+      .min(8, "Пароль повинен містити щонайменше 8 символів")
+      .regex(
+        passwordRequirements,
+        "Пароль має містити велику літеру, малу літеру, цифру та спеціальний символ"
+      ),
   })
   .refine((data) => data.password === data.confirm_password, {
     message: "Паролі не співпадають.",
