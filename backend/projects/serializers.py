@@ -1,0 +1,3 @@
+
+class ProjectSerializer:
+    pass
