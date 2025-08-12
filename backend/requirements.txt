@@ -13,3 +13,4 @@ PyJWT==2.10.1
 pytest==8.4.1
 pytest-django==4.11.1
 djangorestframework_simplejwt==5.5.1
+Faker==37.5.3
