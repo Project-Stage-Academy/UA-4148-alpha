@@ -9,19 +9,46 @@ from users.serializers import (
     PasswordResetSubmissionSerializer,
     TokenVerificationSerializer,
     PasswordResetRequestSerializer,
-    UserRegistrationSerializer
+    UserRegistrationSerializer,
+    UserSerializer
 )
 from rest_framework.response import Response
 from django.conf import settings
 from django.core.mail import send_mail
-
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 
 class UserViewSet(viewsets.ViewSet):
+    """
+    A ViewSet for handling user-related operations:
+    - Registration
+    - Viewing own profile
+    - Password reset (placeholder)
+    """
+
+    def get_permissions(self):
+        """
+        Set permissions dynamically based on action.
+        Public access allowed for registration and password reset.
+        """
+        if self.action in ['register', 'reset_password']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+    @action(detail=False, methods=['get'], url_path='me', permission_classes=[IsAuthenticated])
+    def me(self, request):
+        user = request.user
+        if not user.is_authenticated:
+            return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='register')
     def register(self, request):
+        """
+        Register a new user.
+        """
         serializer = UserRegistrationSerializer(data=request.data)
 
         if serializer.is_valid():
