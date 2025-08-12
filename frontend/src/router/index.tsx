@@ -3,6 +3,7 @@ import { Root } from "../Root";
 import { About } from "@/pages/About";
 import { EnterprisesAndIndustries } from "@/pages/EnterprisesAndIndustries";
 import { SignIn } from "@/pages/auth/SignIn";
+import { SignUp } from "@/pages/auth/SignUp";
 import { ForgotPassword } from "@/pages/auth/ForgotPassword";
 import { PasswordRecoveryEmailSent } from "@/pages/auth/PasswordRecoveryEmailSent";
 
@@ -22,6 +23,10 @@ const routes = createBrowserRouter([
       {
         path: "/signin",
         element: <SignIn />,
+      },
+      {
+        path: "/signup",
+        element: <SignUp />,
       },
       {
         path: "/forgot-password",
