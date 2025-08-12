@@ -107,16 +107,16 @@ class UserViewSet(viewsets.ViewSet):
             return Response({ "valid": True, "message": "Token is valid" }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path='reset_password_submission')
-    def verify_token(self, request):
+    @action(detail=False, methods=['post'], url_path='reset-password')
+    def reset_password(self, request):
         serializer = PasswordResetSubmissionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({ "message": 'Password reset successful' })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path='password-reset')
-    def password_reset(self, request):
+    @action(detail=False, methods=['post'], url_path='reset-password-request')
+    def reset_password_request(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
