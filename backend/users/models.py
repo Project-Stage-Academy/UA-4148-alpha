@@ -23,8 +23,12 @@ class PasswordResetToken(models.Model):
     def __str__(self):
         return f"Token for {self.user.email} (expires {self.expires_at})"
 
+class Role(models.TextChoices):
+    INVESTOR = "INVESTOR", "Investor"
+    STARTUP = "STARTUP", "Startup"
+
 class UserRole(models.Model):
-    role = models.CharField(max_length=50, unique=True)
+    role = models.CharField(max_length=50, unique=True, choices=Role.choices)
 
     def __str__(self):
         return self.role
