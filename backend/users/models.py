@@ -34,6 +34,7 @@ class UserProfile(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    verified = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
