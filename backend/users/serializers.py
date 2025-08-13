@@ -70,15 +70,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         website = validated_data.pop('website', '')
         user = UserProfile.objects.create_user(password=password, **validated_data)
         
-        # Create a profile depending on the user type
+        # Create a profile depending of the user type
         if representative_type == 'startup':
             StartupProfile.objects.create(
-            id=user.id,
-            company_name=company_name,
-            website=website,
-            description='', #Placeholder for description and can be filled by frontend
-            views_count=0
-        )
+                id=user.id,
+                company_name=company_name,
+                website=website,
+                description='', #Placeholder for description and can be filled by frontend
+                views_count=0
+            )
         elif representative_type == 'investor':
             InvestorProfile.objects.create(
                 id=user.id,
