@@ -2,6 +2,8 @@ from rest_framework import serializers
 from users.models import UserProfile
 from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
+from startups.models import StartupProfile
+from investors.models import InvestorProfile
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -14,12 +16,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     password = serializers.CharField(write_only=True, required=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
+    
+    # Field to distinguish between startup and investor
+    representative_type = serializers.ChoiceField(
+        choices=[('startup', 'Startup'), ('investor', 'Investor')],
+        write_only=True
+    )
+    company_name = serializers.CharField(write_only=True, required=True)
+    website = serializers.URLField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = UserProfile
         fields = [
             'username', 'email', 'password', 'confirm_password',
-            'first_name', 'last_name', 'role'
+            'first_name', 'last_name', 'role',
+            'representative_type', 'company_name', 'website',
         ]
 
     def validate_password(self, value):
@@ -52,7 +63,29 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         """Create user with hashed password and remove confirm_password"""
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
+
+        # Fields for type of UserProfile
+        representative_type = validated_data.pop('representative_type')
+        company_name = validated_data.pop('company_name')
+        website = validated_data.pop('website', '')
         user = UserProfile.objects.create_user(password=password, **validated_data)
+        
+        # Create a profile depending on the user type
+        if representative_type == 'startup':
+            StartupProfile.objects.create(
+            id=user.id,
+            company_name=company_name,
+            website=website,
+            description='', #Placeholder for description and can be filled by frontend
+            views_count=0
+        )
+        elif representative_type == 'investor':
+            InvestorProfile.objects.create(
+                id=user.id,
+                company_name=company_name,
+                website=website
+            )
+        
         return user
 
 class PasswordResetRequestSerializer(serializers.Serializer):
