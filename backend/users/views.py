@@ -18,7 +18,7 @@ from users.serializers import (
     UserRegistrationSerializer,
     UserSerializer
 )
-from users.utils.email_activation import generate_activation_token
+from users.utils.email_activation import generate_activation_token, verify_activation_token
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -33,7 +33,7 @@ class UserViewSet(viewsets.ViewSet):
         Set permissions dynamically based on action.
         Public access allowed for registration and password reset.
         """
-        if self.action in ['register', 'reset_password']:
+        if self.action in ['register', 'reset_password', 'activate']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
@@ -56,12 +56,16 @@ class UserViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             user = serializer.save()
             
+            # Login blocking until activation
+            user.is_active = False
+            user.save(update_fields=['is_active'])
+            
             # Generate a token and send a letter
             token = generate_activation_token(user)
             activation_url = f"{settings.FRONTEND_URL}/activate?token={token}"
             send_mail(
-                subject='Подтвердите ваш email',
-                message=f'Нажмите на ссылку чтобы активировать аккаунт: {activation_url}',
+                subject='Confirm your email',
+                message=f'Click on the link to activate your account: {activation_url}',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email]
             )
@@ -105,6 +109,25 @@ class UserViewSet(viewsets.ViewSet):
     
         else: 
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    @action(detail=False, methods=['get'], url_path='activate')
+    def activate(self, request):
+        """
+        Confirm email by token
+        """
+        token = request.query_params.get('token')
+        if not token:
+            return Response({"detail": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user, error = verify_activation_token(token)
+        if not user:
+            return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+
+        return Response({"detail": "Account activated successfully"}, status=status.HTTP_200_OK)
 
 
     @action(detail=False, methods=['post'], url_path='validate-reset-token')
