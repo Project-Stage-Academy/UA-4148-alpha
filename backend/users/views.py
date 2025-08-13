@@ -1,12 +1,14 @@
-
 from django.shortcuts import render, redirect
 from .models import UserProfile
 from rest_framework.decorators import action
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions
-
-
+from rest_framework.response import Response
+from django.conf import settings
+from django.core.mail import send_mail
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .utils import generate_password_reset_token
 from users.serializers import (
@@ -16,11 +18,7 @@ from users.serializers import (
     UserRegistrationSerializer,
     UserSerializer
 )
-from rest_framework.response import Response
-from django.conf import settings
-from django.core.mail import send_mail
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
+from users.utils.email_activation import generate_activation_token
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -57,7 +55,16 @@ class UserViewSet(viewsets.ViewSet):
 
         if serializer.is_valid():
             user = serializer.save()
-            # TODO: Implement the email sending logic
+            
+            # Generate a token and send a letter
+            token = generate_activation_token(user)
+            activation_url = f"{settings.FRONTEND_URL}/activate?token={token}"
+            send_mail(
+                subject='Подтвердите ваш email',
+                message=f'Нажмите на ссылку чтобы активировать аккаунт: {activation_url}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email]
+            )
 
             # TODO: tokens
             return Response({
