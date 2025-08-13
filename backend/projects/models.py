@@ -21,30 +21,10 @@ class StartupProject(models.Model):
 
     status = models.ForeignKey(ProjectStatus, on_delete=models.SET_NULL, null=True, related_name='project_statuses')
     startup = models.ForeignKey(StartupProfile, on_delete=models.CASCADE, related_name='projects')
-    investor = models.ForeignKey(InvestorProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='projects')
+    investor = models.ForeignKey(InvestorProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='investments')
 
     def __str__(self):
         return self.subject
-
-
-class ProjectFile(models.Model):
-    project = models.ForeignKey(StartupProject, on_delete=models.CASCADE, related_name='files')
-    file_url = models.FileField(upload_to='project_files/')
-    file_type = models.CharField(max_length=50)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.file_type} for {self.project.subject}"
-
-class StartupRating(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='startups')
-    startup = models.ForeignKey(StartupProfile, on_delete=models.CASCADE)
-    rating = models.IntegerField()
-    comment = models.TextField(blank=True)
-    rated_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} rated {self.startup.company_name}"
 
 class SavedStartup(models.Model):
     startup = models.ForeignKey(StartupProfile, on_delete=models.CASCADE)
