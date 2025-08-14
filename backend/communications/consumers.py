@@ -1,5 +1,50 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from asgiref.sync import sync_to_async
+from .mongo_models import Room, Message
+from django.utils import timezone
+
+
+@sync_to_async
+def get_or_create_room(room_name, user_data):
+    """
+    Finds an existing room or create a new one.
+    Adds the connecting user to participants if not already in the room.
+    """
+    room = Room.objects(name=room_name).first()
+    if not room:
+        room = Room(name=room_name)
+        room.save()
+
+    room.add_participant(
+        user_id=user_data.get('id'),
+        username=user_data.get('username'),
+        first_name=user_data.get('first_name'),
+        last_name=user_data.get('last_name'),
+    )
+    return room
+
+@sync_to_async
+def save_message(room, sender_data, text):
+    """
+    Saves a message in MongoDB for the given room.
+    """
+    msg = Message(
+        room=room,
+        sender_id=str(sender_data.get('id')),
+        sender_first_name=sender_data.get('first_name'),
+        sender_last_name=sender_data.get('last_name'),
+        text=text,
+        timestamp=timezone.now(),
+    )
+    msg.save()
+    return {
+        'text': msg.text,
+        'sender_id': msg.sender_id,
+        'sender_first_name': msg.sender_first_name,
+        'sender_last_name': msg.sender_last_name,
+        'timestamp': msg.timezone.isoformat(),
+    }
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
