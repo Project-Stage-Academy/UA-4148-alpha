@@ -32,18 +32,10 @@ class UserViewSet(viewsets.ViewSet):
         """
         if self.action == 'me':
             return [IsAuthenticated(), InvestorRolePermission()]
-        if self.action in ['create_role', 'login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
+        if self.action in ['login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
             return [AllowAny()]
         return [IsAuthenticated()]
     
-    @action(detail=False, methods=['post'], url_path='create-role')
-    def create_role(self, request):
-        """
-        Create a new user role if it does not exist.
-        """
-        role, created = UserRole.objects.get_or_create(role=request.data.get('role'))
-        return Response({ "role": role.role }, status=status.HTTP_201_CREATED)
-
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
         user = request.user
