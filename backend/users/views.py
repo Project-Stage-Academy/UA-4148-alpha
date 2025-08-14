@@ -79,6 +79,25 @@ class UserViewSet(viewsets.ViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @action(detail=False, methods=['get'], url_path='activate')
+    def activate(self, request):
+        """
+        Confirm email by token
+        """
+        token = request.query_params.get('token')
+        if not token:
+            return Response({"detail": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user, error = verify_activation_token(token)
+        if not user:
+            return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+
+        return Response({"detail": "Account activated successfully"}, status=status.HTTP_200_OK)
+    
     @action(detail=False, methods=['post'], url_path='login')
     def login(self, request):
         email = request.data.get("email")
@@ -109,26 +128,6 @@ class UserViewSet(viewsets.ViewSet):
     
         else: 
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
-    @action(detail=False, methods=['get'], url_path='activate')
-    def activate(self, request):
-        """
-        Confirm email by token
-        """
-        token = request.query_params.get('token')
-        if not token:
-            return Response({"detail": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        user, error = verify_activation_token(token)
-        if not user:
-            return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not user.is_active:
-            user.is_active = True
-            user.save(update_fields=['is_active'])
-
-        return Response({"detail": "Account activated successfully"}, status=status.HTTP_200_OK)
-
 
     @action(detail=False, methods=['post'], url_path='validate-reset-token')
     def validate_reset_token(self, request):
