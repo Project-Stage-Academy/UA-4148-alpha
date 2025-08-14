@@ -44,6 +44,24 @@ class UserViewSet(viewsets.ViewSet):
 
         serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'], url_path='switch-role')
+    def switch_role(self, request):
+        """
+        Switch the user's role.
+        """
+        user = request.user
+        role_id = request.data.get('role_id')
+        if not role_id:
+            return Response({"detail": "Role ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        role = UserRole.objects.filter(id=role_id).first()
+        if not role:
+            return Response({"detail": "Role does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        user.role = role
+        user.save()
+        return Response({"message": "Role switched successfully."}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='register')
     def register(self, request):
