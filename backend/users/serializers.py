@@ -2,8 +2,8 @@ from rest_framework import serializers
 from users.models import UserProfile
 from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
-from startups.models import StartupProfile  #TODO: Change to real names when creating models
-from investors.models import InvestorProfile #TODO: Change to real names when creating models
+from profiles.models import StartupProfile
+from profiles.models import InvestorProfile
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
