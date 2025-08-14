@@ -2,8 +2,8 @@ from rest_framework import serializers
 from users.models import UserProfile
 from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
-from startups.models import StartupProfile
-from investors.models import InvestorProfile
+from startups.models import StartupProfile  #TODO: Change to real names when creating models
+from investors.models import InvestorProfile #TODO: Change to real names when creating models
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -68,23 +68,24 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         representative_type = validated_data.pop('representative_type')
         company_name = validated_data.pop('company_name')
         website = validated_data.pop('website', '')
+        
         user = UserProfile.objects.create_user(password=password, **validated_data)
+        
+        profile_data = {
+            'user': user,
+            'company_name': company_name,
+            'website': website,
+        }
         
         # Create a profile depending of the user type
         if representative_type == 'startup':
             StartupProfile.objects.create(
-                id=user.id,
-                company_name=company_name,
-                website=website,
                 description='', #Placeholder for description and can be filled by frontend
-                views_count=0
+                views_count=0,
+                **profile_data
             )
         elif representative_type == 'investor':
-            InvestorProfile.objects.create(
-                id=user.id,
-                company_name=company_name,
-                website=website
-            )
+            InvestorProfile.objects.create(profile_data)
         
         return user
 
