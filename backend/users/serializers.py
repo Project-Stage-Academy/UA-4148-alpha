@@ -68,6 +68,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         representative_type = validated_data.pop('representative_type')
         company_name = validated_data.pop('company_name')
         website = validated_data.pop('website', '')
+        industry_id = validated_data.pop('industry_id', None)   #TODO: when creating industry and location models, import and specify the correct fields
+        locations_id = validated_data.pop('locations_id', None) #TODO: when creating industry and location models, import and specify the correct fields
         
         user = UserProfile.objects.create_user(password=password, **validated_data)
         
@@ -77,11 +79,23 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'website': website,
         }
         
+        if representative_type == 'startup':
+            # Get Industry and Location objects
+            industry = None
+            location = None
+            
+            if industry_id:
+                industry = Industry.objects.get(id=industry_id) #TODO: Will be correct when creating industry model
+            if locations_id:
+                location = Location.objects.get(id=locations_id) #TODO: will be correct when creating location model
+        
         # Create a profile depending of the user type
         if representative_type == 'startup':
             StartupProfile.objects.create(
                 description='', #Placeholder for description and can be filled by frontend
                 views_count=0,
+                industry=industry,
+                location=location,
                 **profile_data
             )
         elif representative_type == 'investor':
