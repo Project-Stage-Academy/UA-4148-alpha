@@ -1,9 +1,8 @@
-from .permissions import RolePermission
-from .models import UserProfile
+from .permissions import InvestorRolePermission
+from .models import UserProfile, UserRole
 from rest_framework.decorators import action
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
@@ -31,17 +30,28 @@ class UserViewSet(viewsets.ViewSet):
         Set permissions dynamically based on action.
         Public access allowed for registration and password reset.
         """
-        if self.action in ['login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
-            return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+        if self.action == 'me':
+            return [IsAuthenticated(), InvestorRolePermission()]
+        if self.action in ['create_role', 'login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+    
+    @action(detail=False, methods=['post'], url_path='create-role')
+    def create_role(self, request):
+        """
+        Create a new user role if it does not exist.
+        """
+        role, created = UserRole.objects.get_or_create(role=request.data.get('role'))
+        return Response({ "role": role.role }, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['get'], url_path='me', permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
         user = request.user
+        print("USER: ", user, user.role)
         if not user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='register')
