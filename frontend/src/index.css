@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -20,6 +26,8 @@
   --color-main-gray-5: #f8f8f8;
   --color-main-white: #ffffff;
   --color-main-black: #231c09;
+  --color-main-black-90: #292E32;
+  --color-main-bg: #f9f5ec;
 
   /* Primary */
   --color-primary-green-100: #0b6c61;
@@ -35,7 +43,7 @@
 
   /* Secondary */
   --color-secondary-black: #232424;
-  --color-secondary-beige: #F1E7D2;
+  --color-secondary-beige: #f1e7d2;
 
   /* Inactive */
   --color-inactive-100: #a1a1a1;

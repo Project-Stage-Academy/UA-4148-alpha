@@ -1,6 +1,7 @@
 import { Navigation } from "./Navigation";
 import { AuthButtons } from "./AuthButtons";
 import { Logo } from "./Logo";
+import { Search } from "../composed/Search";
 
 export const Header = () => {
   return (
@@ -9,7 +10,7 @@ export const Header = () => {
         <Logo />
         <div className="flex items-center gap-6">
           <Navigation />
-          <p>Search</p>
+          <Search />
           <AuthButtons />
         </div>
       </div>
