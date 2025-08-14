@@ -9,7 +9,6 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView
 )
 from django.conf.urls.static import static
-from users.views import UserLoginView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -35,7 +34,6 @@ token_urlpatterns = [
 
 api_urlpatterns = [
     path('token/', include(token_urlpatterns)),
-    path('auth/login/', UserLoginView.as_view(), name='login'),
     path('', include('users.urls')),
 ]
 

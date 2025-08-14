@@ -1,6 +1,13 @@
+
+from django.shortcuts import render, redirect
+from .models import UserProfile
 from rest_framework.decorators import action
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import permissions
+
+
+
 from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
@@ -9,12 +16,10 @@ from users.serializers import (
     UserRegistrationSerializer,
     UserSerializer
 )
-from users.models import UserProfile
 from rest_framework.response import Response
 from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
-from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 class UserViewSet(viewsets.ViewSet):
@@ -62,12 +67,17 @@ class UserViewSet(viewsets.ViewSet):
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UserLoginView(APIView):
-    def post(self, request):
+    
+    @action(detail=False, methods=['post'], url_path='login')
+    def login(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
 
+        if not email or not password:
+            return Response(
+                {"detail": "Email and password are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         user = authenticate(email=email, password=password)
         
         if user is not None:
@@ -97,16 +107,16 @@ class UserLoginView(APIView):
             return Response({ "valid": True, "message": "Token is valid" }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path='reset_password_submission')
-    def verify_token(self, request):
+    @action(detail=False, methods=['post'], url_path='reset-password')
+    def reset_password(self, request):
         serializer = PasswordResetSubmissionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({ "message": 'Password reset successful' })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path='password-reset')
-    def password_reset(self, request):
+    @action(detail=False, methods=['post'], url_path='reset-password-request')
+    def reset_password_request(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
