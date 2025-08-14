@@ -4,6 +4,7 @@ from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
 from profiles.models import StartupProfile
 from profiles.models import InvestorProfile
+from profiles.models import Industry, Location
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -68,8 +69,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         representative_type = validated_data.pop('representative_type')
         company_name = validated_data.pop('company_name')
         website = validated_data.pop('website', '')
-        industry_id = validated_data.pop('industry_id', None)   #TODO: when creating industry and location models, import and specify the correct fields
-        locations_id = validated_data.pop('locations_id', None) #TODO: when creating industry and location models, import and specify the correct fields
+        industry_id = validated_data.pop('industry_id', None)
+        locations_id = validated_data.pop('locations_id', None)
         
         user = UserProfile.objects.create_user(password=password, **validated_data)
         
@@ -85,9 +86,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             location = None
             
             if industry_id:
-                industry = Industry.objects.get(id=industry_id) #TODO: Will be correct when creating industry model
+                industry = Industry.objects.get(id=industry_id)
             if locations_id:
-                location = Location.objects.get(id=locations_id) #TODO: will be correct when creating location model
+                location = Location.objects.get(id=locations_id)
         
         # Create a profile depending of the user type
         if representative_type == 'startup':
