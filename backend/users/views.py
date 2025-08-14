@@ -1,13 +1,9 @@
-
-from django.shortcuts import render, redirect
+from .permissions import RolePermission
 from .models import UserProfile
 from rest_framework.decorators import action
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions
-
-
-
 from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
@@ -35,7 +31,7 @@ class UserViewSet(viewsets.ViewSet):
         Set permissions dynamically based on action.
         Public access allowed for registration and password reset.
         """
-        if self.action in ['register', 'reset_password']:
+        if self.action in ['login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
