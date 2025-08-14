@@ -35,11 +35,10 @@ class UserViewSet(viewsets.ViewSet):
         if self.action in ['login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
             return [AllowAny()]
         return [IsAuthenticated()]
-    
+    # TODO: remove /me route after testing
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
         user = request.user
-        print("USER: ", user, user.role)
         if not user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
