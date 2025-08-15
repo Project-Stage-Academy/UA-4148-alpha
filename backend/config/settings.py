@@ -203,5 +203,6 @@ MONGO_DB_NAME = env("MONGO_DB_NAME")
 
 mongoengine.connect(
     db=MONGO_DB_NAME,
-    host=f"mongodb://{MONGO_HOST}:{MONGO_PORT}"
+    host=f"mongodb://{MONGO_HOST}:{MONGO_PORT}",
+    alias="chat_db"
 )

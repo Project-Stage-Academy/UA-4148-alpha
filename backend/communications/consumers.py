@@ -43,7 +43,7 @@ def save_message(room, sender_data, text):
         'sender_id': msg.sender_id,
         'sender_first_name': msg.sender_first_name,
         'sender_last_name': msg.sender_last_name,
-        'timestamp': msg.timezone.isoformat(),
+        'timestamp': msg.timestamp.isoformat(),
     }
 
 
@@ -74,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.send(json.dumps({
             'type': 'system',
-            'message': f'{self.user_data['username']} joined the room.'
+            'message': f"{self.user_data['username']} joined the room."
         }))
 
     async def disconnect(self, close_code):
@@ -95,8 +95,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             return
 
-        message = data.get('message' or '').strip()
-        if not message:
+        text = data.get('message' or '').strip()
+        if not text:
             return
 
         saved = await save_message(self.room, self.user_data, text)
@@ -104,7 +104,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_group_name, {
                 'type': 'chat_message',
-                'message': saved['message'],
+                'message': saved['text'],
                 'sender_id': saved['sender_id'],
                 'sender_first_name': saved['sender_first_name'],
                 'sender_last_name': saved['sender_last_name'],
