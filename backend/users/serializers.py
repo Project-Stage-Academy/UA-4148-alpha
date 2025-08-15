@@ -97,7 +97,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 **profile_data
             )
         elif representative_type == 'investor':
-            InvestorProfile.objects.create(profile_data)
+            InvestorProfile.objects.create(**profile_data)
         
         return user
 
