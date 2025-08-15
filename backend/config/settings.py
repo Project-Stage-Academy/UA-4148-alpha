@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
+
     'users',
     'profiles',
     'projects',
@@ -70,9 +72,14 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     "SIGNING_KEY": env('DJANGO_SECRET_KEY'),
-
+    'ROTATE_REFRESH_TOKENS': False, #Maybe we should change it to True and then the next line of code will work?
+    'BLACKLIST_AFTER_ROTATION': True,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    'AUTH_TOKEN_CLASSES': (
+        'rest_framework_simplejwt.tokens.AccessToken',
+        'rest_framework_simplejwt.tokens.RefreshToken',
+        ),
 }
 
 MIDDLEWARE = [
