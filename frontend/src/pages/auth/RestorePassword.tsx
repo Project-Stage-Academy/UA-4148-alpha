@@ -49,10 +49,15 @@ export function RestorePassword() {
   });
 
   const { isValid, isSubmitting } = form.formState;
+  const token = params.get("token");
 
   const handleRestorePassword = async (data: RestorePasswordFormValues) => {
+    if (!token) return;
     try {
-      await restorePassword.mutateAsync(data);
+      await restorePassword.mutateAsync({
+        ...data,
+        token,
+      });
     } catch (error: unknown) {
       form.setError("confirm_password", {
         type: "manual",
@@ -62,7 +67,6 @@ export function RestorePassword() {
   };
 
   useEffect(() => {
-    const token = params.get("token");
     if (token) {
       restoreTokenValidQuery.mutate({
         token,
