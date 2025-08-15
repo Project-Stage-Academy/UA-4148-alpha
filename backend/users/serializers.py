@@ -4,7 +4,9 @@ from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SlugRelatedField(slug_field='role', read_only=True)
+    """Serializer for user profile"""
     class Meta:
         model = UserProfile
         fields = ['username', 'email', 'first_name', 'last_name', 'role']
