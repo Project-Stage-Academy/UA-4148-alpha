@@ -66,7 +66,7 @@ class UserViewSet(viewsets.ViewSet):
             activation_url = f"{settings.FRONTEND_URL}/activate?token={token}"
             send_mail(
                 subject='Confirm your email',
-                html_message=f'Click on the link to activate your account: <a href="{activation_url}"></a>',
+                html_message=f'Click on the link to activate your account: <a href="{activation_url}">{activation_url}</a>',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email]
             )
