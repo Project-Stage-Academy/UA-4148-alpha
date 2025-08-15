@@ -1,12 +1,9 @@
-
-from django.shortcuts import render, redirect
-from .models import UserProfile
+from .permissions import InvestorRolePermission
+from .models import UserProfile, UserRole
 from rest_framework.decorators import action
-from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import permissions
-
-
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import viewsets, status, permissions
+from rest_framework.views import APIView
 
 from .utils import generate_password_reset_token
 from users.serializers import (
@@ -21,6 +18,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -35,18 +33,38 @@ class UserViewSet(viewsets.ViewSet):
         Set permissions dynamically based on action.
         Public access allowed for registration and password reset.
         """
-        if self.action in ['register', 'reset_password']:
-            return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
-
-    @action(detail=False, methods=['get'], url_path='me', permission_classes=[IsAuthenticated])
+        if self.action == 'me':
+            return [IsAuthenticated(), InvestorRolePermission()]
+        if self.action in ['login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+    # TODO: remove /me route after testing
+    @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):
         user = request.user
         if not user.is_authenticated:
             return Response({"detail": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'], url_path='switch-role')
+    def switch_role(self, request):
+        """
+        Switch the user's role.
+        """
+        user = request.user
+        role_id = request.data.get('role_id')
+        if not role_id:
+            return Response({"detail": "Role ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        role = UserRole.objects.filter(id=role_id).first()
+        if not role:
+            return Response({"detail": "Role does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        user.role = role
+        user.save()
+        return Response({"message": "Role switched successfully."}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='register')
     def register(self, request):
@@ -134,4 +152,16 @@ class UserViewSet(viewsets.ViewSet):
             )
 
         return Response({"message": "If the email exist, a reset link has been send."}, status=status.HTTP_200_OK)
+    
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"detail": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
