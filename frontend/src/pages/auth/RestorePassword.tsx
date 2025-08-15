@@ -68,7 +68,7 @@ export function RestorePassword() {
         token,
       });
     }
-  }, [params, restoreTokenValidQuery]);
+  }, []);
 
   return (
     <div className="px-2 mx-auto flex items-center justify-center h-screen">
