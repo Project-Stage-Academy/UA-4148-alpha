@@ -1,9 +1,8 @@
 from .permissions import InvestorRolePermission
 from .models import UserProfile, UserRole
 from rest_framework.decorators import action
-from rest_framework import viewsets, status, status
-from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import viewsets, status, permissions
 from rest_framework.views import APIView
 
 from .utils import generate_password_reset_token

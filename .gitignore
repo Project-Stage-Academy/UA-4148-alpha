@@ -167,4 +167,6 @@ cython_debug/
 #.idea/
 .env
 staticfiles
+
 .DS_Store
+
