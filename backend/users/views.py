@@ -1,8 +1,11 @@
 from .permissions import InvestorRolePermission
 from .models import UserProfile, UserRole
 from rest_framework.decorators import action
+from rest_framework import viewsets, status, status
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
+
 from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
@@ -16,6 +19,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -149,4 +153,16 @@ class UserViewSet(viewsets.ViewSet):
             )
 
         return Response({"message": "If the email exist, a reset link has been send."}, status=status.HTTP_200_OK)
+    
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"detail": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
