@@ -167,4 +167,3 @@ cython_debug/
 #.idea/
 .env
 staticfiles
-backend\projects\migrations\0001_initial.py

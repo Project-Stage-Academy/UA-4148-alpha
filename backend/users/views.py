@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import UserProfile
 from rest_framework.decorators import action
+from rest_framework import viewsets, status, permissions, status
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
 
 from .utils import generate_password_reset_token
 from users.serializers import (
@@ -18,6 +20,12 @@ from users.serializers import (
     UserRegistrationSerializer,
     UserSerializer
 )
+from rest_framework.response import Response
+from django.conf import settings
+from django.core.mail import send_mail
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from users.utils.email_activation import generate_activation_token, verify_activation_token
 
 class UserViewSet(viewsets.ViewSet):
@@ -163,4 +171,16 @@ class UserViewSet(viewsets.ViewSet):
             )
 
         return Response({"message": "If the email exist, a reset link has been send."}, status=status.HTTP_200_OK)
+    
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"detail": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
