@@ -2,15 +2,15 @@ from django.shortcuts import render, redirect
 from .models import UserProfile
 from rest_framework.decorators import action
 from rest_framework import viewsets, status, permissions, status
-from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import permissions
 from rest_framework.response import Response
 from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from users.utils.email_activation import generate_activation_token, verify_activation_token
 
 from .utils import generate_password_reset_token
 from users.serializers import (
@@ -20,13 +20,6 @@ from users.serializers import (
     UserRegistrationSerializer,
     UserSerializer
 )
-from rest_framework.response import Response
-from django.conf import settings
-from django.core.mail import send_mail
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-from users.utils.email_activation import generate_activation_token, verify_activation_token
 
 class UserViewSet(viewsets.ViewSet):
     """
