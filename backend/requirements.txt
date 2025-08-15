@@ -26,12 +26,11 @@ sqlparse==0.5.3
 tomli==2.2.1
 typing_extensions==4.14.1
 uritemplate==4.2.0
-
 pytest-django==4.11.1
 djangorestframework_simplejwt==5.5.1
 coverage==7.10.1
 pytest-cov==4.1.0
-
 channels==4.3.1
 daphne==4.2.1
-channels-redis==4.3.0Faker==37.5.3
+channels-redis==4.3.0
+Faker==37.5.3

@@ -11,14 +11,14 @@ class Command(BaseCommand):
         parser.add_argument(
             '--users',
             type=int,
-            default=50,
-            help='Number of fake users to create (default: 50)'
+            default=10,
+            help='Number of fake users to create (default: 10)'
         )
         parser.add_argument(
             '--roles',
             type=int,
-            default=5,
-            help='Number of fake roles to create (default: 5)'
+            default=2,
+            help='Number of fake roles to create (default: 2)'
         )
         parser.add_argument(
             '--clear',
@@ -50,16 +50,8 @@ class Command(BaseCommand):
         self.stdout.write(f'Creating {num_roles} fake roles...')
         roles = []
         role_names = [
-            'Administrator',
-            'Manager',
-            'Developer',
-            'Designer',
-            'Tester',
-            'Analyst',
-            'Support',
-            'Consultant',
-            'Intern',
-            'Lead'
+            'investor',
+            'startup'
         ]
         
         for i in range(num_roles):

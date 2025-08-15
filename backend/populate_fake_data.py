@@ -21,7 +21,7 @@ from django.contrib.auth.hashers import make_password
 from users.models import UserRole, UserProfile
 
 
-def populate_fake_data(num_users=50, num_roles=5, clear_existing=False):
+def populate_fake_data(num_users=10, num_roles=2, clear_existing=False):
     """
     Populate database with fake data using Faker.
     
@@ -45,16 +45,8 @@ def populate_fake_data(num_users=50, num_roles=5, clear_existing=False):
     print(f'Creating {num_roles} fake roles...')
     roles = []
     role_names = [
-        'Administrator',
-        'Manager',
-        'Developer',
-        'Designer',
-        'Tester',
-        'Analyst',
-        'Support',
-        'Consultant',
-        'Intern',
-        'Lead'
+        'investor',
+        'startup'
     ]
     
     for i in range(num_roles):
@@ -113,8 +105,8 @@ if __name__ == '__main__':
     import argparse
     
     parser = argparse.ArgumentParser(description='Populate database with fake data')
-    parser.add_argument('--users', type=int, default=50, help='Number of fake users to create (default: 50)')
-    parser.add_argument('--roles', type=int, default=5, help='Number of fake roles to create (default: 5)')
+    parser.add_argument('--users', type=int, default=10, help='Number of fake users to create (default: 10)')
+    parser.add_argument('--roles', type=int, default=2, help='Number of fake roles to create (default: 2)')
     parser.add_argument('--clear', action='store_true', help='Clear existing data before populating')
     
     args = parser.parse_args()

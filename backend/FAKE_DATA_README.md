@@ -20,17 +20,17 @@ You can use the Django management command to populate the database:
 # Navigate to the backend directory
 cd UA-4148-alpha/backend
 
-# Run the management command with default settings (50 users, 5 roles)
+# Run the management command with default settings (10 users, 2 roles)
 python manage.py populate_fake_data
 
 # Run with custom parameters
-python manage.py populate_fake_data --users 100 --roles 10
+python manage.py populate_fake_data --users 100 --roles 2
 
 # Clear existing data before populating
 python manage.py populate_fake_data --clear
 
 # Combine options
-python manage.py populate_fake_data --users 200 --roles 8 --clear
+python manage.py populate_fake_data --users 200 --roles 2 --clear
 ```
 
 ### 2. Standalone Script
@@ -45,37 +45,29 @@ cd UA-4148-alpha/backend
 python populate_fake_data.py
 
 # Run with custom parameters
-python populate_fake_data.py --users 100 --roles 10
+python populate_fake_data.py --users 100 --roles 2
 
 # Clear existing data before populating
 python populate_fake_data.py --clear
 
 # Combine options
-python populate_fake_data.py --users 200 --roles 8 --clear
+python populate_fake_data.py --users 200 --roles 2 --clear
 ```
 
 ## Command Line Options
 
 Both scripts support the following options:
 
-- `--users`: Number of fake users to create (default: 50)
-- `--roles`: Number of fake roles to create (default: 5)
+- `--users`: Number of fake users to create (default: 10)
+- `--roles`: Number of fake roles to create (default: 2)
 - `--clear`: Clear existing data before populating (optional flag)
 
 ## What Data is Created
 
 ### User Roles
 The script creates predefined roles in this order:
-1. Administrator
-2. Manager
-3. Developer
-4. Designer
-5. Tester
-6. Analyst
-7. Support
-8. Consultant
-9. Intern
-10. Lead
+1. investor
+2. startup
 
 If you request more roles than the predefined list, additional roles will be generated using Faker's job titles.
 
@@ -102,14 +94,14 @@ The scripts populate the following models from the `users` app:
 
 ### Basic Usage
 ```bash
-# Create 50 users and 5 roles
+# Create 10 users and 2 roles
 python manage.py populate_fake_data
 ```
 
 ### Development Environment
 ```bash
-# Create 200 users and 10 roles for testing
-python manage.py populate_fake_data --users 200 --roles 10
+# Create 200 users and 2 roles for testing
+python manage.py populate_fake_data --users 200 --roles 2
 ```
 
 ### Reset and Repopulate
@@ -121,7 +113,7 @@ python manage.py populate_fake_data --clear
 ### Production-like Data
 ```bash
 # Create a large dataset for performance testing
-python manage.py populate_fake_data --users 1000 --roles 15
+python manage.py populate_fake_data --users 1000 --roles 2
 ```
 
 ## Notes
