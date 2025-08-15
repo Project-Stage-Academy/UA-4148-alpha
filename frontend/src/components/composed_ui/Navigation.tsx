@@ -1,9 +1,10 @@
+import { cn } from "@/libs/utils";
 import { Link } from "react-router-dom";
 
-export function Navigation() {
+export function Navigation({ className }: { className?: string }) {
   return (
     <nav aria-label="Main navigation">
-      <ol className="flex gap-6 items-center">
+      <ol className={cn("flex gap-6 items-center", className)}>
         <li>
           <Link
             to="/about"
