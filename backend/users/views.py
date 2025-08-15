@@ -6,8 +6,7 @@ from rest_framework import viewsets, status, permissions, status
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions
-
-
+from rest_framework.views import APIView
 
 from .utils import generate_password_reset_token
 from users.serializers import (
