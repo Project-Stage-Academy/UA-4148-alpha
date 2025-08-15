@@ -53,7 +53,7 @@ export const Header = () => {
           className="bg-main-white z-40 inset-0 h-screen border-t border-inactive-60 px-6 py-8 flex flex-col gap-6"
         >
           <Search onSubmit={modal.toggle} />
-          <Navigation className="flex-col items-start" />
+          <Navigation onClick={modal.toggle} className="flex-col items-start" />
         </div>
       )}
     </header>
