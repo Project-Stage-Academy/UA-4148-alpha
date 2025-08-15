@@ -2,10 +2,7 @@ from rest_framework import serializers
 from users.models import UserProfile
 from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
-from profiles.models import StartupProfile
-from profiles.models import InvestorProfile
-from profiles.models import Industry, Location
-
+from profiles.models import StartupProfile, InvestorProfile, Industry, Location
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
