@@ -66,8 +66,8 @@ class UserViewSet(viewsets.ViewSet):
             activation_url = f"{settings.FRONTEND_URL}/activate?token={token}"
             plain_message = (
                 "Hello!\n\n"
-                "Please click the link below to activate your account:\n"
-                f"{activation_url}\n\n"
+                "Copy the token below and send it to the frontend POST /activate endpoint:\n"
+                f"{token}\n\n"
                 "Thank you!"
             )
             
@@ -75,8 +75,11 @@ class UserViewSet(viewsets.ViewSet):
             <html>
             <body>
                 <p>Hello!</p>
-                <p>Please click the link below to activate your account:</p>
-                <p><a href="{activation_url}">Activate your account</a></p>
+                <p>Click the button below to activate your account:</p>
+                <form action="{activation_url}" method="POST" style="display:inline;">
+                    <input type="hidden" name="token" value="{token}">
+                    <button type="submit">Activate your account</button>
+                </form>
                 <p>Thank you!</p>
             </body>
             </html>
@@ -98,12 +101,13 @@ class UserViewSet(viewsets.ViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=['get'], url_path='activate')
+    @action(detail=False, methods=['post'], url_path='activate')
     def activate(self, request):
         """
-        Confirm email by token
+        Confirm email by token.
+        Expects POST with JSON body: {"token": "<activation_token>"}
         """
-        token = request.query_params.get('token')
+        token = request.data.get('token')
         if not token:
             return Response({"detail": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
