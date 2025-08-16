@@ -3,47 +3,74 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from .mongo_models import Room, Message
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 
 @sync_to_async
-def get_or_create_room(room_name, user_data):
+def get_user(user_id):
     """
-    Finds an existing room or create a new one.
-    Adds the connecting user to participants if not already in the room.
+    Retrieve a user by ID.
     """
-    room = Room.objects(name=room_name).first()
-    if not room:
-        room = Room(name=room_name)
-        room.save()
+    User = get_user_model()
+    try:
+        return User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return None
 
-    room.add_participant(
-        user_id=user_data.get('id'),
-        username=user_data.get('username'),
-        first_name=user_data.get('first_name'),
-        last_name=user_data.get('last_name'),
-    )
+@sync_to_async
+def get_or_create_room(user, other_user):
+    """
+    Retrieve an existing room between two users or create a new one.
+    """
+    if not user or not other_user:
+        raise ValueError("Both users must be valid")
+    room_name = f"chat_{min(user.id, other_user.id)}_{max(user.id, other_user.id)}"
+    room = Room.objects(name=room_name).first()
+
+    if not room:
+        room = Room(
+            name=room_name,
+            participants=[
+                {
+                    "id": str(user.id),
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+                {
+                    "id": str(other_user.id),
+                    "username": other_user.username,
+                    "first_name": other_user.first_name,
+                    "last_name": other_user.last_name,
+                },
+            ],
+        )
+        room.save()
     return room
 
 @sync_to_async
-def save_message(room, sender_data, text):
+def save_message(room, sender, text):
     """
     Saves a message in MongoDB for the given room.
     """
     msg = Message(
         room=room,
-        sender_id=str(sender_data.get('id')),
-        sender_first_name=sender_data.get('first_name'),
-        sender_last_name=sender_data.get('last_name'),
+        sender_id=str(sender.id),
+        sender_first_name=sender.first_name,
+        sender_last_name=sender.last_name,
         text=text,
         timestamp=timezone.now(),
+        is_read=False,
     )
     msg.save()
     return {
-        'text': msg.text,
-        'sender_id': msg.sender_id,
-        'sender_first_name': msg.sender_first_name,
-        'sender_last_name': msg.sender_last_name,
-        'timestamp': msg.timestamp.isoformat(),
+        "id": str(msg.id),
+        "sender_id": msg.sender_id,
+        "first_name": msg.sender_first_name,
+        "last_name": msg.sender_last_name,
+        "text": msg.text,
+        "timestamp": msg.timestamp.isoformat(),
+        "is_read": msg.is_read,
     }
 
 
@@ -51,65 +78,66 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         """
         Handles a new WebSocket connection.
-        Joins the user to the chat room group based on 'room_name' from the URL.
+        Validates user authentication and URL parameters,
+        retrieves or creates a room, joins the user to the corresponding
+        channel layer group, and accepts the WebSocket connection.
         """
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        user = self.scope.get('user')
-        self.user_data = {
-            'id': getattr(user, 'id', None) or 'anon',
-            'username': getattr(user, 'username', 'Anonymous'),
-            'first_name': getattr(user, 'first_name', ''),
-            'last_name': getattr(user, 'last_name', ''),
-        }
+        User = get_user_model()
+        # self.user = self.scope.get("user")
+        self.user = await sync_to_async(User.objects.get)(id=1) # until JWT with WebSocket auth is done
+        other_user_id = self.scope["url_route"]["kwargs"].get("other_user_id")
 
-        if not self.room_name:
+        # if not user or not user.is_authenticated or not other_user_id:
+        if not self.user or not other_user_id:
             await self.close()
             return
 
-        self.room_group_name = f'chat_{self.room_name}'
-        self.room = await get_or_create_room(self.room_name, self.user_data)
+        self.other_user = await get_user(other_user_id)
+        if not self.other_user:
+            await self.close()
+            return
+
+        self.room = await get_or_create_room(self.user, self.other_user)
+        self.room_group_name = f"chat_{self.room.name}"
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
-
-        await self.send(json.dumps({
-            'type': 'system',
-            'message': f"{self.user_data['username']} joined the room."
-        }))
 
     async def disconnect(self, close_code):
         """
         Handles WebSocket disconnection.
         Removes the user from the chat room group.
         """
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        if hasattr(self, 'room_group_name'):
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):
         """
-        Receive a message from the WebSocket, saves it and broadcasts it.
-        Validates JSON format and presence of 'message' key,
-        then sends it to the room group.
+        Handles incoming messages from the WebSocket.
+        Parses and validates the message payload, saves it to MongoDB,
+        and broadcasts it to all users in the room group.
         """
         try:
             data = json.loads(text_data or '{}')
         except json.JSONDecodeError:
             return
 
-        text = data.get('message' or '').strip()
-        if not text:
+        message = (data.get('message') or '').strip()
+        if not message:
             return
 
-        saved = await save_message(self.room, self.user_data, text)
+        saved = await save_message(self.room, self.user, message)
 
         await self.channel_layer.group_send(
             self.room_group_name, {
                 'type': 'chat_message',
                 'message': saved['text'],
                 'sender_id': saved['sender_id'],
-                'sender_first_name': saved['sender_first_name'],
-                'sender_last_name': saved['sender_last_name'],
+                'first_name': saved['first_name'],
+                'last_name': saved['last_name'],
                 'timestamp': saved['timestamp'],
-            }
+                'is_read': saved['is_read'],
+            },
         )
 
     async def chat_message(self, event):
@@ -120,7 +148,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "type": "message",
             "message": event["message"],
             "sender_id": event["sender_id"],
-            "sender_first_name": event["sender_first_name"],
-            "sender_last_name": event["sender_last_name"],
+            "first_name": event["first_name"],
+            "last_name": event["last_name"],
             "timestamp": event["timestamp"],
+            "is_read": event["is_read"],
         }))
