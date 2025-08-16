@@ -64,11 +64,29 @@ class UserViewSet(viewsets.ViewSet):
             # Generate a token and send a letter
             token = generate_activation_token(user)
             activation_url = f"{settings.FRONTEND_URL}/activate?token={token}"
+            plain_message = (
+                "Hello!\n\n"
+                "Please click the link below to activate your account:\n"
+                f"{activation_url}\n\n"
+                "Thank you!"
+            )
+            
+            html_message = f"""
+            <html>
+            <body>
+                <p>Hello!</p>
+                <p>Please click the link below to activate your account:</p>
+                <p><a href="{activation_url}">Activate your account</a></p>
+                <p>Thank you!</p>
+            </body>
+            </html>
+            """
             send_mail(
                 subject='Confirm your email',
-                html_message=f'Click on the link to activate your account: <a href="{activation_url}">{activation_url}</a>',
+                message = plain_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email]
+                recipient_list=[user.email],
+                html_message=html_message,
             )
 
             # TODO: tokens
