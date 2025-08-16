@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
-
+import mongoengine
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,14 +45,16 @@ INSTALLED_APPS = [
     'channels',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
+  
     'users',
     'profiles',
     'projects',
@@ -70,9 +72,14 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     "SIGNING_KEY": env('DJANGO_SECRET_KEY'),
-
+    'ROTATE_REFRESH_TOKENS': False, #Maybe we should change it to True and then the next line of code will work?
+    'BLACKLIST_AFTER_ROTATION': True,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    'AUTH_TOKEN_CLASSES': (
+        'rest_framework_simplejwt.tokens.AccessToken',
+        'rest_framework_simplejwt.tokens.RefreshToken',
+        ),
 }
 
 MIDDLEWARE = [
@@ -189,3 +196,12 @@ CHANNEL_LAYERS = {
     },
 }
 
+# MongoDB
+MONGO_HOST = env("MONGO_HOST")
+MONGO_PORT = env("MONGO_PORT", cast=int)
+MONGO_DB_NAME = env("MONGO_DB_NAME")
+
+mongoengine.connect(
+    db=MONGO_DB_NAME,
+    host=f"mongodb://{MONGO_HOST}:{MONGO_PORT}"
+)
