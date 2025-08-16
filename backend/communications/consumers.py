@@ -73,6 +73,24 @@ def save_message(room, sender, text):
         "is_read": msg.is_read,
     }
 
+@ sync_to_async()
+def get_message_history(room):
+    """
+    Retrieves the last N messages from the room in order.
+    """
+    messages = Message.objects(room=room).order_by("timestamp")[:50]
+    return [
+        {
+            "sender_id": msg.sender_id,
+            "sender_first_name": msg.sender_first_name,
+            "sender_last_name": msg.sender_last_name,
+            "text": msg.text,
+            "timestamp": msg.timestamp.isoformat(),
+            "is_read": msg.is_read,
+        }
+        for msg in messages
+    ]
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -83,11 +101,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         channel layer group, and accepts the WebSocket connection.
         """
         User = get_user_model()
-        # self.user = self.scope.get("user")
-        self.user = await sync_to_async(User.objects.get)(id=1) # until JWT with WebSocket auth is done
+
+        # TODO: adjust when JWT with WebSocket authentication will be done
+        self.user = await sync_to_async(User.objects.get)(id=1)
+
         other_user_id = self.scope["url_route"]["kwargs"].get("other_user_id")
 
-        # if not user or not user.is_authenticated or not other_user_id:
+        # TODO: check also if user is_authenticated when JWT with WebSocket authentication will be done
         if not self.user or not other_user_id:
             await self.close()
             return
@@ -102,6 +122,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
+
+        messages = await get_message_history(self.room)
+        await self.send(text_data=json.dumps({
+            "type": "history",
+            "messages": messages
+        }))
 
     async def disconnect(self, close_code):
         """
