@@ -79,14 +79,18 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         if representative_type == 'startup':
             # Get Industry and Location objects
-            industry = None
-            location = None
+            def get_validation_industry_object_id(model, object_id, field_name):
+                """Check if the object ID is valid and return the object."""
+                
+                if not object_id:
+                    return None
+                try:
+                    return model.objects.get(id=object_id)
+                except serializers.ValidationError({field_name: f"Invalid {field_name}"})
+                
+            industry = get_validation_industry_object_id(Industry, industry_id, 'industry_id')
+            location = get_validation_industry_object_id(Location, locations_id, 'location_id')
             
-            if industry_id:
-                industry = Industry.objects.get(id=industry_id)
-            if locations_id:
-                location = Location.objects.get(id=locations_id)
-        
         # Create a profile depending of the user type
         if representative_type == 'startup':
             StartupProfile.objects.create(
