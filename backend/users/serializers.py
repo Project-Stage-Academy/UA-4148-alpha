@@ -86,7 +86,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                     return None
                 try:
                     return model.objects.get(id=object_id)
-                except serializers.ValidationError({field_name: f"Invalid {field_name}"})
+                except model.DoesNotExist:
+                    serializers.ValidationError({field_name: f"Invalid {field_name}"})
                 
             industry = get_validation_industry_object_id(Industry, industry_id, 'industry_id')
             location = get_validation_industry_object_id(Location, locations_id, 'location_id')
