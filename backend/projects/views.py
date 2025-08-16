@@ -1,17 +1,13 @@
-from decimal import Decimal
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-
-from .serializers import ProjectSerializer, SubscriptionCreateSerializer
-from .models import Project, Subscription, Investor
+from .serializers import ProjectSerializer, SubscriptionSerializer
+from .models import StartupProject as Project, Subscription
 from .permissions import IsInvestor
 
-
 class ProjectViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsInvestor]
 
     def list(self, request):
         projects = Project.objects.all()
@@ -19,36 +15,34 @@ class ProjectViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
-        project = get_object_or_404(Project, pk=pk)
+        try:
+            project = Project.objects.get(pk=pk)
+        except Project.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         serializer = ProjectSerializer(project)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsInvestor])
+    @action(detail=True, methods=['post'])
     def subscribe(self, request, pk=None):
-        project = get_object_or_404(Project, pk=pk)
-
-        if project.total_funding() >= project.budget:
-            return Response(
-                {"error": "This project is already fully funded."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
-            investor = Investor.objects.get(email=request.user.email)
-        except Investor.DoesNotExist:
-            return Response(
-                {"detail": "Only investors can subscribe."},
-                status=status.HTTP_403_FORBIDDEN
+            project = Project.objects.get(pk=pk)
+        except Project.DoesNotExist:
+            return Response({"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = SubscriptionSerializer(data=request.data)
+        if serializer.is_valid():
+            share = serializer.validated_data["share"]
+
+            if project.funding_goal is None:
+                return Response({"error": "Project has no funding goal set."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if project.remaining_funding() < share:
+                return Response({"error": "Funding goal exceeded"}, status=status.HTTP_400_BAD_REQUEST)
+
+            subscription = serializer.save(
+                investor=request.user.investorprofile, 
+                project=project
             )
+            return Response(SubscriptionSerializer(subscription).data, status=status.HTTP_201_CREATED)
 
-        data = {
-            "investor": investor.id,  
-            "project": pk,
-            "share": request.data.get("share"),
-            "investment_amount": request.data.get("investment_amount"),
-        }
-
-        serializer = SubscriptionCreateSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(investor=investor, project=project)  
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
