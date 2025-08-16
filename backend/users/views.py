@@ -20,6 +20,7 @@ from users.serializers import (
     UserRegistrationSerializer,
     UserSerializer
 )
+from users.utils.email_utils import send_activation_email
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -63,34 +64,7 @@ class UserViewSet(viewsets.ViewSet):
             
             # Generate a token and send a letter
             token = generate_activation_token(user)
-            activation_url = f"{settings.FRONTEND_URL}/activate?token={token}"
-            plain_message = (
-                "Hello!\n\n"
-                "Copy the token below and send it to the frontend POST /activate endpoint:\n"
-                f"{token}\n\n"
-                "Thank you!"
-            )
-            
-            html_message = f"""
-            <html>
-            <body>
-                <p>Hello!</p>
-                <p>Click the button below to activate your account:</p>
-                <form action="{activation_url}" method="POST" style="display:inline;">
-                    <input type="hidden" name="token" value="{token}">
-                    <button type="submit">Activate your account</button>
-                </form>
-                <p>Thank you!</p>
-            </body>
-            </html>
-            """
-            send_mail(
-                subject='Confirm your email',
-                message = plain_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                html_message=html_message,
-            )
+            send_activation_email(token, user.email, settings.FRONTEND_URL)
 
             # TODO: tokens
             return Response({
@@ -121,6 +95,30 @@ class UserViewSet(viewsets.ViewSet):
 
         return Response({"detail": "Account activated successfully"}, status=status.HTTP_200_OK)
     
+    @action(detail=False, methods=['post'], url_path='resend-activation')
+    def resend_activation(self, request):
+        """
+        Resend activation email to a user who has not activated their account.
+        Expects POST with JSON body: {"email": "<user_email>"}
+        """
+        email = request.data.get('email')
+        if not email:
+            return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = UserProfile.objects.filter(email=email).first()
+        if not user:
+            # From a security perspective, the message does not reveal the existence of the email.
+            return Response({"detail": "If the email exists, an activation link has been sent."}, status=status.HTTP_200_OK)
+
+        if user.is_active:
+            return Response({"detail": "Account is already active."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate a new activation token and send the email
+        token = generate_activation_token(user)
+        send_activation_email(token, user.email, settings.FRONTEND_URL)
+
+        return Response({"detail": "If the email exists, an activation link has been sent."}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['post'], url_path='login')
     def login(self, request):
         email = request.data.get("email")
