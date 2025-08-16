@@ -1,4 +1,6 @@
 import json
+from urllib.parse import parse_qs
+
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from .mongo_models import Room, Message
@@ -73,7 +75,7 @@ def save_message(room, sender, text):
         "is_read": msg.is_read,
     }
 
-@ sync_to_async()
+@sync_to_async
 def get_message_history(room):
     """
     Retrieves the last N messages from the room in order.
@@ -100,20 +102,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         retrieves or creates a room, joins the user to the corresponding
         channel layer group, and accepts the WebSocket connection.
         """
-        User = get_user_model()
 
         # TODO: adjust when JWT with WebSocket authentication will be done
-        self.user = await sync_to_async(User.objects.get)(id=1)
-
+        query_params = parse_qs(self.scope["query_string"].decode())
+        user_id = query_params.get("user", [None])[0]
         other_user_id = self.scope["url_route"]["kwargs"].get("other_user_id")
 
         # TODO: check also if user is_authenticated when JWT with WebSocket authentication will be done
-        if not self.user or not other_user_id:
+        if not user_id or not other_user_id:
             await self.close()
             return
 
+        self.user = await get_user(user_id)
         self.other_user = await get_user(other_user_id)
-        if not self.other_user:
+
+        if not self.other_user or not self.other_user:
             await self.close()
             return
 
