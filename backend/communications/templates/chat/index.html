@@ -1,36 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8"/>
-    <title>Chat Rooms</title>
+    <meta charset="utf-8">
+    <title>Start a Chat</title>
 </head>
 <body>
-    <p>What chat room would you like to enter?</p>
-    <form id="room-form">
-        <input id="room-name-input" type="text" size="100" placeholder="Enter room name">
-        <button id="room-name-submit" type="submit">Enter</button>
-    </form>
+    <h2>Select a user to chat with:</h2>
+
+    <ul>
+        {% for user in users %}
+            {% if user.id != current_user_id %}
+                <li>
+                    {{ user.first_name }} {{ user.last_name }} ({{ user.email }})
+                    <button onclick="startChat({{ current_user_id }}, {{ user.id }})">Chat</button>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
 
     <script>
-        const roomNameInput = document.querySelector('#room-name-input');
-        const roomForm = document.querySelector('#room-form');
-
-        if (!roomNameInput || !roomForm) {
-            console.error("Required elements not found.");
-        } else {
-            roomNameInput.focus();
-
-            roomForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-
-                const roomName = roomNameInput.value.trim();
-                if (!roomName) {
-                    alert('Please enter a room name.');
-                    return;
-                }
-
-                window.location.pathname = '/chat/' + encodeURIComponent(roomName) + '/';
-            });
+        function startChat(currentUserId, otherUserId) {
+            const roomUrl = `/chat/room/${otherUserId}/?user=${currentUserId}`;
+            window.location.href = roomUrl;
         }
     </script>
 </body>
