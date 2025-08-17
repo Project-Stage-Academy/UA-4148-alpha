@@ -4,12 +4,14 @@ from django.contrib.auth import get_user_model
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 
 User = get_user_model() #the model is taken from AUTH_USER_MODEL in settings and this is better because it is universal and not tied to a specific path
 
 @database_sync_to_async
 def get_user(user_id):
+    """Asynchronously get the user by ID, or None if not found."""
     try:
         return User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -34,7 +36,8 @@ class JWTAuthMiddleware(BaseMiddleware):
                 user = await get_user(user_id)
                 if user:
                     scope["user"] = user
-            except Exception:
+            except (TokenError, InvalidToken, KeyError):
+                # If the token is invalid, expired or does not contain user_id, leave AnonymousUser
                 pass
 
         return await super().__call__(scope, receive, send)
