@@ -84,8 +84,8 @@ def get_message_history(room):
     return [
         {
             "sender_id": msg.sender_id,
-            "sender_first_name": msg.sender_first_name,
-            "sender_last_name": msg.sender_last_name,
+            "first_name": msg.sender_first_name,
+            "last_name": msg.sender_last_name,
             "text": msg.text,
             "timestamp": msg.timestamp.isoformat(),
             "is_read": msg.is_read,
@@ -160,12 +160,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_group_name, {
                 'type': 'chat_message',
-                'message': saved['text'],
-                'sender_id': saved['sender_id'],
-                'first_name': saved['first_name'],
-                'last_name': saved['last_name'],
-                'timestamp': saved['timestamp'],
-                'is_read': saved['is_read'],
+                'message': saved,
             },
         )
 
@@ -175,10 +170,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         await self.send(json.dumps({
             "type": "message",
-            "message": event["message"],
-            "sender_id": event["sender_id"],
-            "first_name": event["first_name"],
-            "last_name": event["last_name"],
-            "timestamp": event["timestamp"],
-            "is_read": event["is_read"],
+            **event["message"],
         }))

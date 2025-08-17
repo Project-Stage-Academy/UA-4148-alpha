@@ -5,8 +5,8 @@
     <title>Chat Room</title>
 </head>
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
-    <input id="chat-message-input" type="text" size="100" placeholder="Type a message..."><br>
+    <div id="chat-log" style="width: 100%; height: 300px; overflow-y: scroll; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
+    <textarea id="chat-message-input" rows="3" cols="100" placeholder="Type a message..."></textarea><br>
     <input id="chat-message-submit" type="button" value="Send">
 
     {{ other_user_id|json_script:"other-user-id" }}
@@ -38,7 +38,9 @@
         let reconnectDelay = 2000;
 
         function appendLog(text) {
-            chatLog.value += text + '\n';
+            const newLine = document.createElement("div");
+            newLine.textContent = text;
+            chatLog.appendChild(newLine);
             chatLog.scrollTop = chatLog.scrollHeight;
         }
 
@@ -78,20 +80,21 @@
                 bindMessageEvents();
             };
 
+            function renderMessage(msg) {
+                const name = `${msg.first_name} ${msg.last_name}`;
+                appendLog(`${name}: ${msg.text}    ${msg.timestamp}`);
+            }
+
             chatSocket.onmessage = (e) => {
                 try {
                     const data = JSON.parse(e.data);
 
                     if (data.type === "history" && Array.isArray(data.messages)) {
-                        data.messages.forEach(msg => {
-                            const name = `${msg.sender_first_name} ${msg.sender_last_name}`;
-                            appendLog(`${name}: ${msg.text}    ${msg.timestamp}`);
-                        });
+                        data.messages.forEach(renderMessage);
                     }
 
-                    if (data.type === "message" && data.message) {
-                        const name = `${data.sender_first_name} ${data.sender_last_name}`;
-                        appendLog(`${name}: ${data.message}    ${data.timestamp}`);
+                    if (data.type === "message") {
+                        renderMessage(data);
                     }
 
                 } catch (err) {
