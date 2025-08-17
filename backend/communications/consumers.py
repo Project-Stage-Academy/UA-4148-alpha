@@ -12,7 +12,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Authorization check for connections only for authorized users
         user = self.scope.get('user', AnonymousUser())
         if not user or not user.is_authenticated:
-            await self.send(text=json.dumps({'error': 'Authentication required' }))
+            await self.send(text_data=json.dumps({'error': 'Authentication required' }))
             await self.close()
             return
         
