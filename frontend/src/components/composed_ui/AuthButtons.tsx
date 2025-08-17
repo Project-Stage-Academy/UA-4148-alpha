@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuthContext } from "@/hooks/useAuthContext";
+import { AvatarIcon } from "@/icons/AvatarIcon";
 
 export function AuthButtons() {
   const auth = useAuthContext();
@@ -8,7 +9,10 @@ export function AuthButtons() {
     <div className="flex items-center gap-6">
       {auth.user ? (
         <Button variant="tertiary" asChild>
-          <Link to="/profile">Мій профіль</Link>
+          <span className="flex items-center gap-1.5">
+            <AvatarIcon />
+            <Link to="/profile">Мій профіль</Link>
+          </span>
         </Button>
       ) : (
         <>

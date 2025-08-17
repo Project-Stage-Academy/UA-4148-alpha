@@ -1,10 +1,13 @@
+import hashlib
 from rest_framework import serializers
-from users.models import UserProfile
+from users.models import PasswordResetToken, UserProfile
 from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SlugRelatedField(slug_field='role', read_only=True)
+    """Serializer for user profile"""
     class Meta:
         model = UserProfile
         fields = ['username', 'email', 'first_name', 'last_name', 'role']
@@ -59,50 +62,44 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class TokenVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
     token = serializers.CharField()
 
     def validate(self, data):
-        email = data['email']
-        token = data['token']
+        raw_token = data['token']
 
-        user = UserProfile.objects.filter(email=email).first()
-        if not user:
-            raise serializers.ValidationError("Invalid email or token.")
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        token_obj = PasswordResetToken.objects.filter(token_hash=token_hash).first()
+        if not token_obj or not token_obj.is_valid():
+            raise serializers.ValidationError("Invalid token.")
         
-        is_valid, message = verify_reset_token(user, token)
-        if not is_valid:
-            raise serializers.ValidationError(message)
-        
-        data['user'] = user
         return data
 
 class PasswordResetSubmissionSerializer(serializers.Serializer):
-    email = serializers.EmailField()
     token = serializers.CharField()
     password = serializers.CharField()
     confirm_password = serializers.CharField()
 
     def validate(self, data):
-        email = data['email']
-        token = data['token']
+        raw_token = data['token']
         password = data['password']
         confirm_password = data['confirm_password']
 
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match.")
         
-        user = UserProfile.objects.filter(email=email).first()
-        if not user:
-            raise serializers.ValidationError("Invalid email or token.")
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        token_obj = PasswordResetToken.objects.filter(token_hash=token_hash).first()
+        if not token_obj or not token_obj.user:
+            raise serializers.ValidationError("Invalid token.")
         
+        user = token_obj.user
         try:
             validate_password(password, user)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'password': e.messages})
 
        
-        is_valid, message = verify_reset_token(user, token)
+        is_valid, message = verify_reset_token(user, raw_token)
         if not is_valid:
             raise serializers.ValidationError(message)
 
