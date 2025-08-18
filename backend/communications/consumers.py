@@ -1,5 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.contrib.auth.models import AnonymousUser
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -8,6 +9,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Handles a new WebSocket connection.
         Joins the user to the chat room group based on 'room_name' from the URL.
         """
+        # Authorization check for connections only for authorized users
+        user = self.scope.get('user', AnonymousUser())
+        if not user or not user.is_authenticated:
+            await self.send(text_data=json.dumps({'error': 'Authentication required' }))
+            await self.close()
+            return
+        
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
