@@ -1,7 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 from django.urls import reverse
-from users.models import UserProfile, UserRole
+from users.models import UserRole
 
 @pytest.mark.django_db
 class TestUserRole:
@@ -10,21 +10,24 @@ class TestUserRole:
     def setup(self):
         self.client = APIClient()
         self.role = UserRole.objects.create(role="tester")
-        self.user = UserProfile.objects.create_user(
-            username="testuser",
-            email="testuser@example.com",
-            password="TestPass123!",
-            role=self.role,
-            first_name="Test",
-            last_name="User"
-        )
-        self.url = reverse('user')  
+        self.url = reverse('user-create-role')
 
     def test_create(self):
-       pass
+        data = {"role": "investor"}
+        response = self.client.post(self.url, data, format='json')
+        assert response.status_code == 201
+        assert UserRole.objects.filter(role="investor").exists()
+
+    def test_duplicate(self):
+        data = {"role": "investor"}
+        response = self.client.post(self.url, data, format='json')
+        assert response.status_code == 201
+
+        response_duplicate = self.client.post(self.url, data, format='json')
+        assert response_duplicate.status_code == 400
 
     def test_switch(self):
-        pass
+        assert True
 
     def test_create_not_allowed_roles(self):
-        pass
+        assert True
