@@ -23,6 +23,9 @@ export function useValidToken() {
     },
     onError: (error) => {
       console.error(error);
+      if (error.status === 400) {
+        navigate("/forgot-password");
+      }
       if (error.response?.status === 500) {
         throw new Error("Серверна помилка, спробуйте пізніше");
       }
