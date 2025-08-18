@@ -65,15 +65,17 @@ def save_message(room, sender, text):
         is_read=False,
     )
     msg.save()
-    return {
-        "id": str(msg.id),
-        "sender_id": msg.sender_id,
-        "first_name": msg.sender_first_name,
-        "last_name": msg.sender_last_name,
-        "text": msg.text,
-        "timestamp": msg.timestamp.isoformat(),
-        "is_read": msg.is_read,
-    }
+    return [
+        {
+            "id": str(msg.id),
+            "sender_id": msg.sender_id,
+            "first_name": msg.sender_first_name,
+            "last_name": msg.sender_last_name,
+            "text": msg.text,
+            "timestamp": msg.timestamp.isoformat(),
+            "is_read": msg.is_read,
+        }
+    ]
 
 @sync_to_async
 def get_message_history(room):

@@ -24,7 +24,7 @@
         } else {
             try {
                 currentUserId = JSON.parse(currentUserIdEl.textContent);
-                otherUserId = JSON.parse(currentUserIdEl.textContent);
+                otherUserId = JSON.parse(otherUserIdEl.textContent);
             } catch (err) {
                 console.error("Error parsing users IDs from JSON script tags:", err);
             }
@@ -80,23 +80,31 @@
                 bindMessageEvents();
             };
 
+            function getDateTime(timestamp) {
+                try {
+                    const date = new Date(timestamp);
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, "0");
+                    const day = String(date.getDate()).padStart(2, "0");
+                    const hours = String(date.getHours()).padStart(2, "0");
+                    const minutes = String(date.getMinutes()).padStart(2, "0");
+                    const seconds = String(date.getSeconds()).padStart(2, "0");
+                    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                } catch (error) {
+                    console.error(error);
+                    return ""
+                }
+            };
+
             function renderMessage(msg) {
                 const name = `${msg.first_name} ${msg.last_name}`;
-                appendLog(`${name}: ${msg.text}    ${msg.timestamp}`);
+                appendLog(`${name}: ${msg.text}    ${getDateTime(msg.timestamp)}`);
             }
 
             chatSocket.onmessage = (e) => {
                 try {
                     const data = JSON.parse(e.data);
-
-                    if (data.type === "history" && Array.isArray(data.messages)) {
-                        data.messages.forEach(renderMessage);
-                    }
-
-                    if (data.type === "message") {
-                        renderMessage(data);
-                    }
-
+                    data.messages.forEach(renderMessage);
                 } catch (err) {
                     console.error("Error parsing incoming WebSocket message:", err);
                 }
