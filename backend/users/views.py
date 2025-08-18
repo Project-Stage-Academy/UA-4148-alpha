@@ -2,9 +2,9 @@ from .permissions import InvestorRolePermission
 from .models import UserProfile, UserRole
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from rest_framework.views import APIView
-
+from django.db.utils import IntegrityError
 from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
@@ -18,7 +18,6 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 class UserViewSet(viewsets.ViewSet):
     """
@@ -35,7 +34,7 @@ class UserViewSet(viewsets.ViewSet):
         """
         if self.action == 'me':
             return [IsAuthenticated(), InvestorRolePermission()]
-        if self.action in ['login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
+        if self.action in ['create_role', 'login', 'register', 'reset_password', 'validate_reset_token', 'reset_password_request']:
             return [AllowAny()]
         return [IsAuthenticated()]
     # TODO: remove /me route after testing
@@ -48,6 +47,27 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    @action(detail=False, methods=['post'], url_path='create-role')
+    def create_role(self, request):
+        """
+        Create the user's role.
+        """
+        role = request.data.get('role')
+        if role not in [r[0] for r in UserRole.ROLE_CHOICES]:
+            return Response(
+                {"detail": f"Available roles: {[r[0] for r in UserRole.ROLE_CHOICES]}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            new_role = UserRole.objects.create(role=role)
+        except IntegrityError:
+            return Response(
+                {"detail": f"Role '{role}' already exists."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({"message": f"Role {new_role.role} created."}, status=status.HTTP_201_CREATED)
+        
     @action(detail=False, methods=['post'], url_path='switch-role')
     def switch_role(self, request):
         """
