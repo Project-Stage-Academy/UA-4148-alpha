@@ -15,7 +15,6 @@ from users.serializers import (
 
 @pytest.mark.django_db
 def test_user_registration_serializer_valid_and_invalid():
-    # Створюємо користувача з певною email, щоб перевірити дублікати
     UserProfile.objects.create_user(username="existinguser", email="existing@example.com", password="TestPass123!")
 
     # ----- Valid registration -----
