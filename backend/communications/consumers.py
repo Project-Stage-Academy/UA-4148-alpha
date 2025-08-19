@@ -6,6 +6,7 @@ from asgiref.sync import sync_to_async
 from .mongo_models import Room, Message
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 
 
 @sync_to_async
@@ -96,6 +97,7 @@ def get_message_history(room):
     ]
 
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         """
@@ -104,14 +106,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         retrieves or creates a room, joins the user to the corresponding
         channel layer group, and accepts the WebSocket connection.
         """
-
-        # TODO: adjust when JWT with WebSocket authentication will be done
-        query_params = parse_qs(self.scope["query_string"].decode())
-        user_id = query_params.get("user", [None])[0]
+        user = self.scope.get('user', AnonymousUser())
         other_user_id = self.scope["url_route"]["kwargs"].get("other_user_id")
-
-        # TODO: check also if user is_authenticated when JWT with WebSocket authentication will be done
-        if not user_id or not other_user_id:
+  
+        if not user_id or not user.is_authenticated or not other_user_id:
+            await self.send(text_data=json.dumps({'error': 'Authentication required' }))
             await self.close()
             return
 

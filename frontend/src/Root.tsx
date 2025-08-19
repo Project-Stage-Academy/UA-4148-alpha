@@ -5,9 +5,9 @@ export function Root() {
   return (
     <main className="bg-main-bg h-full">
       <Header />
-      <div className="-my-[77px]">
+      <div className="pt-[75px]">
         <Outlet />
       </div>
     </main>
-  );  
+  );
 }
