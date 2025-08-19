@@ -10,9 +10,10 @@ def send_activation_email(token=str, recipient_email=str, frontend_url=str):
     activation_url = f"{frontend_url}/activate_page?token={token}"
     
     plain_message = (
-        "Hello!\n\n"
-        "Copy the token below and send it to the frontend POST /activate endpoint:\n"
-        f"{token}\n\n"
+        f"Hello!\n\n"
+        f"To activate your account, please click the link below or copy the token to the frontend POST /activate endpoint:\n"
+        f"{activation_url}\n\n"
+        f"Token: {token}\n\n"
         "Thank you!"
     )
     
@@ -20,11 +21,14 @@ def send_activation_email(token=str, recipient_email=str, frontend_url=str):
     <html>
     <body>
         <p>Hello!</p>
-        <p>Click the button below to activate your account:</p>
-        <form action="{activation_url}" method="POST" style="display:inline;">
-            <input type="hidden" name="token" value="{token}">
-            <button type="submit">Activate your account</button>
-        </form>
+        <p>To activate your account, click the button below:</p>
+        <a href="{activation_url}" 
+           style="display:inline-block; background-color:#007bff; color:#ffffff; 
+                  padding:12px 24px; text-decoration:none; border-radius:6px; font-weight:bold;">
+           Activate your account
+        </a>
+        <p>If the button does not work, copy and paste the following URL into your browser:</p>
+        <p>{activation_url}</p>
         <p>Thank you!</p>
     </body>
     </html>
