@@ -20,6 +20,11 @@ jobs:
       DJANGO_SECRET_KEY: "dummy-secret-key"
       FRONTEND_URL: http://localhost:5173
       DEFAULT_FROM_EMAIL: noreply@localhost
+      DB_NAME: dummy
+      DB_USER: dummy_user
+      DB_PASSWORD: dummy_password
+      DB_HOST: db
+      DB_PORT: 5432
 
     steps:
       - name: Checkout repository
