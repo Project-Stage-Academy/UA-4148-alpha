@@ -47,6 +47,7 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    # TODO: only admins can create roles. remove create_role from get_permissions once implemented
     @action(detail=False, methods=['post'], url_path='create-role')
     def create_role(self, request):
         """
