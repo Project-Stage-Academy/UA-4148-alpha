@@ -4,7 +4,11 @@ import { Input } from "../ui/input";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-export const Search = () => {
+interface SearchProps {
+  onSubmit?: () => void;
+}
+
+export const Search = ({ onSubmit }: SearchProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
 
@@ -18,6 +22,7 @@ export const Search = () => {
     const currentSearch = searchParams.get("search") ?? "";
     if (trimmed && trimmed !== currentSearch) {
       setSearchParams({ search: trimmed });
+      onSubmit?.()
     }
   };
 
