@@ -33,10 +33,13 @@ from .utils import generate_password_reset_token
 
 class UserViewSet(viewsets.ViewSet):
     """
-    A ViewSet for handling user-related operations:
-    - Registration
+    A ViewSet for managing user-related operations including:
+    - User registration and activation
+    - Login
+    - Switching roles
     - Viewing own profile
-    - Password reset (placeholder)
+    - Password reset requests and submissions
+    - Token validation
     """
 
     def get_permissions(self):
@@ -213,10 +216,9 @@ class UserViewSet(viewsets.ViewSet):
                 status=status.HTTP_200_OK,
             )
 
-        else:
-            return Response(
-                {"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
-            )
+        return Response(
+            {"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+        )
 
     @action(detail=False, methods=["post"], url_path="validate-reset-token")
     def validate_reset_token(self, request):
@@ -260,6 +262,10 @@ class UserViewSet(viewsets.ViewSet):
 
 
 class LogoutView(APIView):
+    """
+    API endpoint for logging out users by blacklisting their refresh tokens.
+    Requires authentication via JWT.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

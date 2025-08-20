@@ -7,6 +7,7 @@ from .serializers import ProjectSerializer
 
 
 class ProjectViewSet(viewsets.ViewSet):
+    """ViewSet for listing, retrieving, and subscribing to projects."""
     permission_classes = [IsAuthenticated]
 
     mock_projects = [

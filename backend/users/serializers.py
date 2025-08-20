@@ -2,6 +2,7 @@ import hashlib
 
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from profiles.models import Industry, InvestorProfile, Location, StartupProfile
 from users.models import PasswordResetToken, UserProfile
@@ -9,8 +10,8 @@ from users.utils import verify_reset_token
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Serializer for reading basic user profile information."""
     role = serializers.SlugRelatedField(slug_field="role", read_only=True)
-    """Serializer for user profile"""
 
     class Meta:
         model = UserProfile
@@ -18,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for user registration"""
+    """Serializer for registering a new user, handling password validation and profile creation."""
 
     password = serializers.CharField(write_only=True, required=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
@@ -128,10 +129,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer for submitting a password reset request via email."""
     email = serializers.EmailField()
 
 
 class TokenVerificationSerializer(serializers.Serializer):
+    """Serializer for validating a password reset token."""
     token = serializers.CharField()
 
     def validate(self, data):
@@ -146,6 +149,7 @@ class TokenVerificationSerializer(serializers.Serializer):
 
 
 class PasswordResetSubmissionSerializer(serializers.Serializer):
+    """Serializer for submitting a new password along with a valid reset token."""
     token = serializers.CharField()
     password = serializers.CharField()
     confirm_password = serializers.CharField()
@@ -166,7 +170,7 @@ class PasswordResetSubmissionSerializer(serializers.Serializer):
         user = token_obj.user
         try:
             validate_password(password, user)
-        except serializers.ValidationError as e:
+        except DjangoValidationError as e:
             raise serializers.ValidationError({"password": e.messages})
 
         is_valid, message = verify_reset_token(user, raw_token)

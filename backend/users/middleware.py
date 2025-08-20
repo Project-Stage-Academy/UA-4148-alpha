@@ -8,9 +8,12 @@ from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 
+# TODO: the model is taken from AUTH_USER_MODEL
+# in settings and this is better because
+# it is universal and not tied to a specific path
 User = (
     get_user_model()
-)  # the model is taken from AUTH_USER_MODEL in settings and this is better because it is universal and not tied to a specific path
+) 
 
 
 @database_sync_to_async
@@ -45,7 +48,9 @@ class JWTAuthMiddleware(BaseMiddleware):
                 else:
                     raise DenyConnection("User not found")
             except (TokenError, InvalidToken, KeyError):
-                # If the token is invalid, expired or does not contain user_id, leave AnonymousUser
+                # If the token is invalid,
+                # expired or does not contain user_id,
+                # leave AnonymousUser
                 raise DenyConnection("Invalid or expired token")
 
         return await super().__call__(scope, receive, send)

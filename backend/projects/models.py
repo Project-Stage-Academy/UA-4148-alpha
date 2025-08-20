@@ -3,9 +3,8 @@ from django.db import models
 
 from profiles.models import InvestorProfile, StartupProfile
 
-
-# Create your models here.
 class ProjectStatus(models.Model):
+    """Represents the status of a startup project, e.g., 'Pending', 'Funded'."""
     status = models.CharField(max_length=150)
 
     def __str__(self):
@@ -13,6 +12,7 @@ class ProjectStatus(models.Model):
 
 
 class StartupProject(models.Model):
+    """Represents a project created by a startup, including investment details."""
     subject = models.CharField(max_length=150)
     idea = models.TextField()
     description = models.TextField(blank=True)
@@ -44,6 +44,7 @@ class StartupProject(models.Model):
 
 
 class SavedStartup(models.Model):
+    """Represents a saved startup by an investor for later reference."""
     startup = models.ForeignKey(StartupProfile, on_delete=models.CASCADE)
     investor = models.ForeignKey(InvestorProfile, on_delete=models.CASCADE)
     saved_at = models.DateTimeField(auto_now_add=True)

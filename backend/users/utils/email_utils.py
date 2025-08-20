@@ -37,6 +37,8 @@ def send_activation_email(token=str, recipient_email=str, frontend_url=str):
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[recipient_email],
         html_message=html_message,
-        fail_silently=True,  # TODO: Due to the lack of DEFAULT_FROM_EMAIL, set it to True for now so that these errors do not distract
+        # TODO: Due to the lack of DEFAULT_FROM_EMAIL,
+        # set it to True for now so that these errors do not distract
+        fail_silently=True,
     )
     return settings.DEFAULT_FROM_EMAIL

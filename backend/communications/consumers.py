@@ -1,10 +1,15 @@
 import json
-
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
 
-
 class ChatConsumer(AsyncWebsocketConsumer):
+    """
+    WebSocket consumer for real-time chat between authenticated users.
+
+    Handles connecting, disconnecting, receiving messages from clients,
+    and broadcasting messages to the chat room group.
+    """
+
     async def connect(self):
         """
         Handles a new WebSocket connection.
@@ -21,7 +26,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f"chat_{self.room_name}"
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -51,7 +55,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         """
-        Receives a message from the room group abd sends it to WebSocket clients.
+        Receives a message from the room group and sends it to WebSocket clients.
         """
         message = event["message"]
         await self.send(text_data=json.dumps({"message": message}))

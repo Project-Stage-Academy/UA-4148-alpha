@@ -28,7 +28,7 @@ def test_register_success():
 @pytest.mark.django_db
 def test_login_success():
     client = APIClient()
-    user = UserProfile.objects.create_user(
+    UserProfile.objects.create_user(
         username="testuser", email="test@example.com", password="TestPass123!"
     )
 
@@ -78,7 +78,7 @@ def test_validate_reset_token_invalid():
 @pytest.mark.django_db
 def test_password_reset_sends_email(settings):
     client = APIClient()
-    user = UserProfile.objects.create_user(
+    UserProfile.objects.create_user(
         username="emailuser", email="email@example.com", password="pass"
     )
 
