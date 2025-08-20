@@ -184,8 +184,9 @@ class PasswordResetSubmissionSerializer(serializers.Serializer):
         attrs["user"] = user
         return attrs
 
-    def save(self):
+    def save(self, **kwargs):
         user = self.validated_data["user"]
         password = self.validated_data["password"]
         user.set_password(password)
         user.save()
+        return user

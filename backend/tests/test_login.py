@@ -7,6 +7,15 @@ from users.models import UserProfile, UserRole
 
 @pytest.mark.django_db
 class TestUserLogin:
+    """
+    Test suite for the user login API endpoint.
+
+    Uses Django REST Framework's APIClient to test:
+        - Successful login with correct credentials.
+        - Login attempts with missing email or password.
+        - Login attempts with incorrect password.
+        - Login attempts for a nonexistent user.
+    """
 
     @pytest.fixture(autouse=True)
     def setup(self):
