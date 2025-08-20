@@ -1,8 +1,8 @@
 import hashlib
 
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
 from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework import serializers
 
 from profiles.models import Industry, InvestorProfile, Location, StartupProfile
 from users.models import PasswordResetToken, UserProfile
@@ -11,6 +11,7 @@ from users.utils import verify_reset_token
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for reading basic user profile information."""
+
     role = serializers.SlugRelatedField(slug_field="role", read_only=True)
 
     class Meta:
@@ -66,13 +67,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("The username is already taken.")
         return value
 
-    def validate(self, data):
+    def validate(self, attrs):
         """Ensure password and confirm_password match"""
-        if data.get("password") != data.get("confirm_password"):
+        if attrs.get("password") != attrs.get("confirm_password"):
             raise serializers.ValidationError(
                 {"password": "The passwords do not match."}
             )
-        return data
+        return attrs
 
     def create(self, validated_data):
         """Create user with hashed password and remove confirm_password"""
@@ -104,7 +105,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 try:
                     return model.objects.get(id=object_id)
                 except model.DoesNotExist:
-                    serializers.ValidationError({field_name: f"Invalid {field_name}"})
+                    raise serializers.ValidationError({field_name: f"Invalid {field_name}"})
 
             industry = get_validation_industry_object_id(
                 Industry, industry_id, "industry_id"
@@ -130,34 +131,37 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     """Serializer for submitting a password reset request via email."""
+
     email = serializers.EmailField()
 
 
 class TokenVerificationSerializer(serializers.Serializer):
     """Serializer for validating a password reset token."""
+
     token = serializers.CharField()
 
-    def validate(self, data):
-        raw_token = data["token"]
+    def validate(self, attrs):
+        raw_token = attrs["token"]
 
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         token_obj = PasswordResetToken.objects.filter(token_hash=token_hash).first()
         if not token_obj or not token_obj.is_valid():
             raise serializers.ValidationError("Invalid token.")
 
-        return data
+        return attrs
 
 
 class PasswordResetSubmissionSerializer(serializers.Serializer):
     """Serializer for submitting a new password along with a valid reset token."""
+
     token = serializers.CharField()
     password = serializers.CharField()
     confirm_password = serializers.CharField()
 
-    def validate(self, data):
-        raw_token = data["token"]
-        password = data["password"]
-        confirm_password = data["confirm_password"]
+    def validate(self, attrs):
+        raw_token = attrs["token"]
+        password = attrs["password"]
+        confirm_password = attrs["confirm_password"]
 
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match.")
@@ -177,8 +181,8 @@ class PasswordResetSubmissionSerializer(serializers.Serializer):
         if not is_valid:
             raise serializers.ValidationError(message)
 
-        data["user"] = user
-        return data
+        attrs["user"] = user
+        return attrs
 
     def save(self):
         user = self.validated_data["user"]

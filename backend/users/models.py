@@ -6,6 +6,7 @@ from django.utils import timezone
 
 class PasswordResetToken(models.Model):
     """Model representing a password reset token for a user."""
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     token_hash = models.CharField(max_length=64, unique=True)
     expires_at = models.DateTimeField()
@@ -13,6 +14,7 @@ class PasswordResetToken(models.Model):
 
     class Meta:
         """Meta options for PasswordResetToken model."""
+
         db_table = "password_reset_token"
         verbose_name = "Password reset token"
         verbose_name_plural = "Password reset tokens"
@@ -29,6 +31,7 @@ class PasswordResetToken(models.Model):
 
 class UserRole(models.Model):
     """Model representing a user role, such as investor or startup."""
+
     ROLE_CHOICES = [
         ("investor", "Investor"),
         ("startup", "Startup"),
@@ -52,6 +55,7 @@ class UserProfile(AbstractUser):
 
     class Meta:
         """Meta options for UserProfile model."""
+
         verbose_name = "User Profile"
         verbose_name_plural = "User Profiles"
         ordering = ["-created_at"]

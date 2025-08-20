@@ -2,10 +2,13 @@ from rest_framework import serializers
 
 from backend.projects.models import StartupProject
 
+
 class ProjectSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source="status.status", read_only=True)
     startup_name = serializers.CharField(source="startup.company_name", read_only=True)
-    investor_name = serializers.CharField(source="investor.company_name", read_only=True, default=None)
+    investor_name = serializers.CharField(
+        source="investor.company_name", read_only=True, default=None
+    )
 
     class Meta:
         model = StartupProject

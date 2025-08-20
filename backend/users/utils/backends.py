@@ -2,9 +2,10 @@ from django.contrib.auth.backends import ModelBackend
 
 from users.models import UserProfile
 
+
 class EmailBackend(ModelBackend):
     """Authenticate users using their email and password instead of username."""
-    
+
     def authenticate(self, request, email=None, password=None, **kwargs):
         try:
             user = UserProfile.objects.get(email=email)

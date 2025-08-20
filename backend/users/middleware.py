@@ -11,9 +11,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 # TODO: the model is taken from AUTH_USER_MODEL
 # in settings and this is better because
 # it is universal and not tied to a specific path
-User = (
-    get_user_model()
-) 
+User = get_user_model()
 
 
 @database_sync_to_async

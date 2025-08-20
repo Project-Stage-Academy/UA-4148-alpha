@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.db import models
 
+
 class Industry(models.Model):
     """Represents an industry sector that a startup can belong to."""
+
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -11,6 +13,7 @@ class Industry(models.Model):
 
 class Location(models.Model):
     """Represents a geographical location of a startup."""
+
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -19,6 +22,7 @@ class Location(models.Model):
 
 class StartupProfile(models.Model):
     """Profile for a startup, including company info, industry, and location."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="startups"
     )
@@ -47,6 +51,7 @@ class StartupProfile(models.Model):
 
 class InvestorProfile(models.Model):
     """Profile for an investor, including company info and website."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investors"
     )

@@ -1,29 +1,22 @@
+from tokenize import TokenError
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
-from django.shortcuts import redirect, render
-from rest_framework import permissions, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from users.serializers import (
-    PasswordResetRequestSerializer,
-    PasswordResetSubmissionSerializer,
-    TokenVerificationSerializer,
-    UserRegistrationSerializer,
-    UserSerializer,
-)
-from users.utils.email_activation import (
-    generate_activation_token,
-    verify_activation_token,
-)
+from users.serializers import (PasswordResetRequestSerializer,
+                               PasswordResetSubmissionSerializer,
+                               TokenVerificationSerializer,
+                               UserRegistrationSerializer, UserSerializer)
+from users.utils.email_activation import (generate_activation_token,
+                                          verify_activation_token)
 from users.utils.email_utils import send_activation_email
 
 from .models import UserProfile, UserRole
@@ -266,6 +259,7 @@ class LogoutView(APIView):
     API endpoint for logging out users by blacklisting their refresh tokens.
     Requires authentication via JWT.
     """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -276,5 +270,5 @@ class LogoutView(APIView):
             return Response(
                 {"detail": "Logout successful."}, status=status.HTTP_205_RESET_CONTENT
             )
-        except Exception as e:
+        except (KeyError, TokenError, InvalidToken) as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -5,7 +5,8 @@ import pytest
 from django.utils import timezone
 
 from users.models import PasswordResetToken, UserProfile
-from users.utils.generate_password_reset_token import generate_password_reset_token
+from users.utils.generate_password_reset_token import \
+    generate_password_reset_token
 from users.utils.verify_reset_token import verify_reset_token
 
 
@@ -46,7 +47,9 @@ def test_verify_reset_token_returns_false_and_deletes_expired_token(user_instanc
     raw_token = generate_password_reset_token(user_instance)
 
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    token_obj = PasswordResetToken.objects.get(user=user_instance, token_hash=token_hash)
+    token_obj = PasswordResetToken.objects.get(
+        user=user_instance, token_hash=token_hash
+    )
     token_obj.expires_at = timezone.now() - timedelta(minutes=1)
     token_obj.save()
 

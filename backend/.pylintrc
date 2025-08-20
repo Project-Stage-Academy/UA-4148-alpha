@@ -66,6 +66,7 @@ ignore-patterns=.*\.pyc,.*\.pyo,.*\.pyd,.*\.so,.*\.egg-info,.*\.tox,.*\/migratio
 # Unix pattern matching.
 ignored-modules=django.http, django.db
 
+django-settings-module=config.settings
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().

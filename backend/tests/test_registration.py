@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 @pytest.mark.django_db
 class TestUserRegistration:
     """Test cases for the user registration endpoint."""
-    
+
     @pytest.fixture(autouse=True)
     def setup(self):
         self.client = APIClient()
