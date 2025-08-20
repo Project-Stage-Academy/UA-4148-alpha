@@ -25,6 +25,9 @@ jobs:
       DB_PASSWORD: dummy_password
       DB_HOST: db
       DB_PORT: 5432
+      MONGO_HOST: dummy_mongo
+      MONGO_PORT: 27017
+      MONGO_DB_NAME: dummy_chat_db
 
     steps:
       - name: Checkout repository
