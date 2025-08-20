@@ -34,5 +34,5 @@ jobs:
 
       - name: Run Pylint
         run: |
-          export PYTHONPATH=$(pwd)/backend
+          export PYTHONPATH=$(pwd)
           pylint --rcfile=backend/.pylintrc backend/
