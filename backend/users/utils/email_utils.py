@@ -2,12 +2,12 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 
-def send_activation_email(token: str, recipient_email: str, frontend_url: str):
+def send_activation_email(token: str, recipient_email: str):
     """
     Sends an activation email with HTML and plain text versions.
     """
     
-    activation_url = f"{frontend_url}/verify-email?token={token}"
+    activation_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
     
     plain_message = (
         f"Hello!\n\n"
