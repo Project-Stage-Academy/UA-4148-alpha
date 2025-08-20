@@ -7,7 +7,7 @@
 <body>
     <div id="chat-log" style="width: 100%; height: 300px; overflow-y: scroll; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
     <textarea id="chat-message-input" rows="3" cols="100" placeholder="Type a message..."></textarea><br>
-    <input id="chat-message-submit" type="button" value="Send">
+    <input id="chat-message-submit" type="button" value="Send" disabled>
 
     {{ other_user_id|json_script:"other-user-id" }}
     {{ current_user_id|json_script:"current-user-id" }}
@@ -15,27 +15,24 @@
     <script>
         let currentUserId = null;
         let otherUserId = null;
+        let chatSocket = null;
+        let reconnectDelay = 2000;
 
         const otherUserIdEl = document.getElementById('other-user-id');
         const currentUserIdEl = document.getElementById('current-user-id');
 
-        if (!otherUserIdEl || !currentUserIdEl) {
-            console.error("User error: missing user elements in DOM.");
-        } else {
+        if (otherUserIdEl && currentUserIdEl) {
             try {
                 currentUserId = JSON.parse(currentUserIdEl.textContent);
                 otherUserId = JSON.parse(otherUserIdEl.textContent);
             } catch (err) {
-                console.error("Error parsing users IDs from JSON script tags:", err);
+                console.error("Error parsing user IDs from JSON script tags:", err);
             }
         }
 
         const chatLog = document.querySelector('#chat-log');
         const messageInputDom = document.querySelector('#chat-message-input');
         const messageSubmitButton = document.querySelector('#chat-message-submit');
-
-        let chatSocket = null;
-        let reconnectDelay = 2000;
 
         function appendLog(text) {
             const newLine = document.createElement("div");
@@ -45,22 +42,34 @@
         }
 
         function bindMessageEvents() {
-            if (!messageInputDom || !messageSubmitButton) return;
-
-            messageInputDom.addEventListener('keydown', function(e) {
+            messageInputDom.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     messageSubmitButton.click();
                 }
             });
 
-            messageSubmitButton.onclick = function() {
+            messageSubmitButton.onclick = function () {
                 const message = messageInputDom.value.trim();
                 if (!message || chatSocket.readyState !== WebSocket.OPEN) return;
 
-                chatSocket.send(JSON.stringify({ message }));
+                chatSocket.send(JSON.stringify({ type: "message", message }));
                 messageInputDom.value = '';
             };
+        }
+
+        function getDateTime(timestamp) {
+            try {
+                return new Date(timestamp).toLocaleString();
+            } catch {
+                return "";
+            }
+        }
+
+        function renderMessage(msg) {
+            const name = `${msg.first_name} ${msg.last_name}`;
+            const time = getDateTime(msg.timestamp);
+            appendLog(`${name}: ${msg.text}    ${time}`);
         }
 
         function initChatSocket() {
@@ -69,50 +78,50 @@
                 return;
             }
 
-            const socketUrl = `ws://${window.location.host}/ws/chat/${otherUserId}/?user=${currentUserId}`;
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                alert("No access token found. Please login first.");
+                return;
+            }
+
+            const socketUrl = `ws://${window.location.host}/ws/chat/${otherUserId}/?token=${token}`;
             chatSocket = new WebSocket(socketUrl);
 
             chatSocket.onopen = () => {
                 reconnectDelay = 2000;
-                console.log("Connected to chat server");
                 appendLog("[Connected to chat]");
                 messageSubmitButton.disabled = false;
                 bindMessageEvents();
             };
 
-            function getDateTime(timestamp) {
-                try {
-                    const date = new Date(timestamp);
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const hours = String(date.getHours()).padStart(2, "0");
-                    const minutes = String(date.getMinutes()).padStart(2, "0");
-                    const seconds = String(date.getSeconds()).padStart(2, "0");
-                    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-                } catch (error) {
-                    console.error(error);
-                    return ""
-                }
-            };
-
-            function renderMessage(msg) {
-                const name = `${msg.first_name} ${msg.last_name}`;
-                appendLog(`${name}: ${msg.text}    ${getDateTime(msg.timestamp)}`);
-            }
-
             chatSocket.onmessage = (e) => {
                 try {
                     const data = JSON.parse(e.data);
-                    data.messages.forEach(renderMessage);
+
+                    switch (data.type) {
+                        case "message":
+                            renderMessage(data);
+                            break;
+                        case "history":
+                            data.messages.forEach(renderMessage);
+                            break;
+                        case "read":
+                            // Optional: mark messages visually as read
+                            console.log("Read messages:", data.message_ids);
+                            break;
+                        case "error":
+                            appendLog(`[Error] ${data.error}`);
+                            break;
+                        default:
+                            console.warn("Unknown message type:", data);
+                    }
                 } catch (err) {
-                    console.error("Error parsing incoming WebSocket message:", err);
+                    console.error("Error parsing WebSocket message:", err);
                 }
             };
 
             chatSocket.onclose = () => {
                 messageSubmitButton.disabled = true;
-                console.warn(`Chat socket closed unexpectedly, reconnecting in ${reconnectDelay / 1000}s...`);
                 appendLog(`[Disconnected, retrying in ${reconnectDelay / 1000} seconds...]`);
                 setTimeout(() => {
                     reconnectDelay = Math.min(reconnectDelay * 2, 30000);

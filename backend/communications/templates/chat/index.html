@@ -5,23 +5,24 @@
     <title>Start a Chat</title>
 </head>
 <body>
-    <h2>Select a user to chat with:</h2>
-
-    <ul>
-        {% for user in users %}
-            {% if user.id != current_user_id %}
+    {% if users %}
+        <h2>Select a startup to chat with:</h2>
+        <ul>
+            {% for user in users %}
                 <li>
                     {{ user.first_name }} {{ user.last_name }} ({{ user.email }})
-                    <button onclick="startChat({{ current_user_id }}, {{ user.id }})">Chat</button>
+                    <button onclick="startChat({{ user.id }})">Chat</button>
                 </li>
-            {% endif %}
-        {% endfor %}
-    </ul>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <h2>No users to start a chat with.</h2>
+        <p>This might be because you are a startup. You can still receive and participate in chats initiated by investors.</p>
+    {% endif %}
 
     <script>
-        function startChat(currentUserId, otherUserId) {
-            const roomUrl = `/chat/room/${otherUserId}/?user=${currentUserId}`;
-            window.location.href = roomUrl;
+        function startChat(otherUserId) {
+            window.location.href = `/chat/room/${otherUserId}/`;
         }
     </script>
 </body>
