@@ -4,13 +4,13 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
-from django.db.utils import IntegrityError
 from .utils import generate_password_reset_token
 from users.serializers import (
     PasswordResetSubmissionSerializer,
     TokenVerificationSerializer,
     PasswordResetRequestSerializer,
     UserRegistrationSerializer,
+    UserRoleSerializer,
     UserSerializer
 )
 from rest_framework.response import Response
@@ -52,21 +52,13 @@ class UserViewSet(viewsets.ViewSet):
         """
         Create the user's role.
         """
-        role = request.data.get('role')
-        if role not in [r[0] for r in UserRole.ROLE_CHOICES]:
-            return Response(
-                {"detail": f"Available roles: {[r[0] for r in UserRole.ROLE_CHOICES]}."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
+        serializer = UserRoleSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            role = serializer.validated_data['role']
             new_role = UserRole.objects.create(role=role)
-        except IntegrityError:
-            return Response(
-                {"detail": f"Role '{role}' already exists."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        return Response({"message": f"Role {new_role.role} created."}, status=status.HTTP_201_CREATED)
+            return Response({"message": f"Role {new_role.role} created."}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     @action(detail=False, methods=['post'], url_path='switch-role')
     def switch_role(self, request):

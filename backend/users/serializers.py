@@ -1,8 +1,29 @@
 from rest_framework import serializers
-from users.models import UserProfile
+from users.models import UserProfile, UserRole
 from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
 
+
+class UserRoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserRole
+        fields = ["role"]
+
+    def validate_role(self, role):
+        """
+        Validate that the role is within ROLE_CHOICES.
+        """
+        valid_roles = dict(UserRole.ROLE_CHOICES).keys()
+        if role not in valid_roles:
+            raise serializers.ValidationError(
+                f"Available roles: {list(valid_roles)}"
+            )
+        if UserRole.objects.filter(role=role).exists():
+            raise serializers.ValidationError(
+                f"Role '{role}' already exists."
+            )
+        
+        return role
 
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.SlugRelatedField(slug_field='role', read_only=True)
