@@ -67,4 +67,3 @@ class TestUserRole:
         data = {"role": "not_allowed_role_to_create"}
         response = self.client.post(self.url, data, format='json')
         assert response.status_code == 400
-        assert True
