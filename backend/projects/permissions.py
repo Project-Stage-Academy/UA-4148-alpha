@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission
 
+
 class IsInvestor(BasePermission):
     message = "User must be an investor."
 
@@ -16,7 +17,9 @@ class IsInvestor(BasePermission):
 
         role = getattr(user, "role", None)
         if role is not None:
-            role_name = getattr(role, "role", None) or (role if isinstance(role, str) else None)
+            role_name = getattr(role, "role", None) or (
+                role if isinstance(role, str) else None
+            )
             if role_name and str(role_name).lower() == "investor":
                 return True
 
