@@ -17,6 +17,7 @@ jobs:
 
     env:
       DJANGO_SETTINGS_MODULE: backend.config.settings
+      DJANGO_SECRET_KEY: "dummy-secret-key"
 
     steps:
       - name: Checkout repository
