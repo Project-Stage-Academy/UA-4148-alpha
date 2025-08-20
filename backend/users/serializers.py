@@ -1,10 +1,13 @@
+import hashlib
 from rest_framework import serializers
-from users.models import UserProfile
+from users.models import PasswordResetToken, UserProfile
 from users.utils import verify_reset_token
 from django.contrib.auth.password_validation import validate_password
+from profiles.models import StartupProfile, InvestorProfile, Industry, Location
 
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SlugRelatedField(slug_field='role', read_only=True)
+    """Serializer for user profile"""
     class Meta:
         model = UserProfile
         fields = ['username', 'email', 'first_name', 'last_name', 'role']
@@ -14,12 +17,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     password = serializers.CharField(write_only=True, required=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
+    
+    # Field to distinguish between startup and investor
+    representative_type = serializers.ChoiceField(
+        choices=[('startup', 'Startup'), ('investor', 'Investor')],
+        write_only=True
+    )
+    company_name = serializers.CharField(write_only=True, required=True)
+    website = serializers.URLField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = UserProfile
         fields = [
             'username', 'email', 'password', 'confirm_password',
-            'first_name', 'last_name', 'role'
+            'first_name', 'last_name', 'role',
+            'representative_type', 'company_name', 'website',
         ]
 
     def validate_password(self, value):
@@ -52,57 +64,93 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         """Create user with hashed password and remove confirm_password"""
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
+
+        # Fields for type of UserProfile
+        representative_type = validated_data.pop('representative_type')
+        company_name = validated_data.pop('company_name')
+        website = validated_data.pop('website', '')
+        industry_id = validated_data.pop('industry_id', None)
+        locations_id = validated_data.pop('locations_id', None)
+        
         user = UserProfile.objects.create_user(password=password, **validated_data)
+        
+        profile_data = {
+            'user': user,
+            'company_name': company_name,
+            'website': website,
+        }
+        
+        if representative_type == 'startup':
+            # Get Industry and Location objects
+            def get_validation_industry_object_id(model, object_id, field_name):
+                """Check if the object ID is valid and return the object."""
+                
+                if not object_id:
+                    return None
+                try:
+                    return model.objects.get(id=object_id)
+                except model.DoesNotExist:
+                    serializers.ValidationError({field_name: f"Invalid {field_name}"})
+                
+            industry = get_validation_industry_object_id(Industry, industry_id, 'industry_id')
+            location = get_validation_industry_object_id(Location, locations_id, 'location_id')
+            
+        # Create a profile depending of the user type
+        if representative_type == 'startup':
+            StartupProfile.objects.create(
+                description='', #Placeholder for description and can be filled by frontend
+                views_count=0,
+                industry=industry,
+                location=location,
+                **profile_data
+            )
+        elif representative_type == 'investor':
+            InvestorProfile.objects.create(**profile_data)
+        
         return user
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class TokenVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
     token = serializers.CharField()
 
     def validate(self, data):
-        email = data['email']
-        token = data['token']
+        raw_token = data['token']
 
-        user = UserProfile.objects.filter(email=email).first()
-        if not user:
-            raise serializers.ValidationError("Invalid email or token.")
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        token_obj = PasswordResetToken.objects.filter(token_hash=token_hash).first()
+        if not token_obj or not token_obj.is_valid():
+            raise serializers.ValidationError("Invalid token.")
         
-        is_valid, message = verify_reset_token(user, token)
-        if not is_valid:
-            raise serializers.ValidationError(message)
-        
-        data['user'] = user
         return data
 
 class PasswordResetSubmissionSerializer(serializers.Serializer):
-    email = serializers.EmailField()
     token = serializers.CharField()
     password = serializers.CharField()
     confirm_password = serializers.CharField()
 
     def validate(self, data):
-        email = data['email']
-        token = data['token']
+        raw_token = data['token']
         password = data['password']
         confirm_password = data['confirm_password']
 
         if password != confirm_password:
             raise serializers.ValidationError("Passwords do not match.")
         
-        user = UserProfile.objects.filter(email=email).first()
-        if not user:
-            raise serializers.ValidationError("Invalid email or token.")
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        token_obj = PasswordResetToken.objects.filter(token_hash=token_hash).first()
+        if not token_obj or not token_obj.user:
+            raise serializers.ValidationError("Invalid token.")
         
+        user = token_obj.user
         try:
             validate_password(password, user)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'password': e.messages})
 
        
-        is_valid, message = verify_reset_token(user, token)
+        is_valid, message = verify_reset_token(user, raw_token)
         if not is_valid:
             raise serializers.ValidationError(message)
 
