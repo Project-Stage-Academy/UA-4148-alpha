@@ -1,8 +1,8 @@
 import pytest
-from rest_framework.test import APIClient
 from django.urls import reverse
-from users.models import UserProfile, UserRole
+from rest_framework.test import APIClient
 
+from users.models import UserProfile, UserRole
 
 
 @pytest.mark.django_db
@@ -18,16 +18,13 @@ class TestUserLogin:
             password="TestPass123!",
             role=self.role,
             first_name="Test",
-            last_name="User"
+            last_name="User",
         )
-        self.url = reverse('user-login')  
+        self.url = reverse("user-login")
 
     def test_login_success(self):
-        data = {
-            "email": "testuser@example.com",
-            "password": "TestPass123!"
-        }
-        response = self.client.post(self.url, data, format='json')
+        data = {"email": "testuser@example.com", "password": "TestPass123!"}
+        response = self.client.post(self.url, data, format="json")
         assert response.status_code == 200
         assert "access" in response.data
         assert "refresh" in response.data
@@ -36,29 +33,26 @@ class TestUserLogin:
         assert response.data["user"]["role"] == "tester"
 
     def test_login_missing_email_or_password(self):
-        response = self.client.post(self.url, {"password": "TestPass123!"}, format='json')
+        response = self.client.post(
+            self.url, {"password": "TestPass123!"}, format="json"
+        )
         assert response.status_code == 400
         assert response.data["detail"] == "Email and password are required."
 
-        
-        response = self.client.post(self.url, {"email": "testuser@example.com"}, format='json')
+        response = self.client.post(
+            self.url, {"email": "testuser@example.com"}, format="json"
+        )
         assert response.status_code == 400
         assert response.data["detail"] == "Email and password are required."
 
     def test_login_wrong_password(self):
-        data = {
-            "email": "testuser@example.com",
-            "password": "WrongPassword"
-        }
-        response = self.client.post(self.url, data, format='json')
+        data = {"email": "testuser@example.com", "password": "WrongPassword"}
+        response = self.client.post(self.url, data, format="json")
         assert response.status_code == 401
         assert response.data["detail"] == "Invalid credentials"
 
     def test_login_nonexistent_user(self):
-        data = {
-            "email": "nonexistent@example.com",
-            "password": "SomePassword"
-        }
-        response = self.client.post(self.url, data, format='json')
+        data = {"email": "nonexistent@example.com", "password": "SomePassword"}
+        response = self.client.post(self.url, data, format="json")
         assert response.status_code == 401
         assert response.data["detail"] == "Invalid credentials"

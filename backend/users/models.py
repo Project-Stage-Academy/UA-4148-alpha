@@ -1,7 +1,8 @@
-from django.db import models
-from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.utils import timezone
+
 
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -10,7 +11,7 @@ class PasswordResetToken(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table="password_reset_token"
+        db_table = "password_reset_token"
         verbose_name = "Password reset token"
         verbose_name_plural = "Password reset tokens"
         indexes = [
@@ -23,6 +24,7 @@ class PasswordResetToken(models.Model):
     def __str__(self):
         return f"Token for {self.user.email} (expires {self.expires_at})"
 
+
 class UserRole(models.Model):
     ROLE_CHOICES = [
         ("investor", "Investor"),
@@ -34,19 +36,21 @@ class UserRole(models.Model):
     def __str__(self):
         return self.role
 
+
 class UserProfile(AbstractUser):
     """Custom user model extending Django's AbstractUser"""
+
     email = models.EmailField(unique=True)
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username", "first_name", "last_name"]
 
     class Meta:
-        verbose_name = 'User Profile'
-        verbose_name_plural = 'User Profiles'
-        ordering = ['-created_at']
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.email
