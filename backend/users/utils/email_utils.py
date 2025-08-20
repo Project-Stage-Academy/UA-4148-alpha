@@ -28,18 +28,20 @@ def send_activation_email(token: str, recipient_email: str, frontend_url: str):
            Activate your account
         </a>
         <p>If the button does not work, copy and paste the following URL into your browser:</p>
-        <p><a>{activation_url}</a></p>
+        <p><a href="{activation_url}">{activation_url}</a></p>
         <p>Thank you!</p>
     </body>
     </html>
     """
     
-    send_mail(
+    # The send_mail() returns 0 (no email was sent) or 1 (the email was sent successfully).
+    send_letter = send_mail(
         subject = "Verify your email",
         message = plain_message,
         html_message = html_message,
-        from_email = settings.DEFAULT_FROM_EMAIL,
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com"),
         recipient_list = [recipient_email],
         fail_silently =True, #TODO: Due to the lack of DEFAULT_FROM_EMAIL, set it to True for now so that these errors do not distract
     )
-    return settings.DEFAULT_FROM_EMAIL
+    
+    return send_letter == 1 #Will return True (successful sending) or False (mail not sent)
