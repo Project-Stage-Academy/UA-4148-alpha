@@ -30,10 +30,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pylint pylint-django
           pip install -r backend/requirements.txt
 
       - name: Run Pylint
         run: |
-          export PYTHONPATH=$(pwd)
-          pylint --load-plugins pylint_django backend/
+          export PYTHONPATH=$(pwd)/backend
+          pylint --rcfile=backend/.pylintrc backend/
