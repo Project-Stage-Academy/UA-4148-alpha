@@ -97,12 +97,6 @@ class MessageSerializer(serializers.Serializer):
         if len(text) > 1000:
             raise serializers.ValidationError({"text": "Message too long (max 1000 chars)"})
 
-        text = attrs.get("text", "").strip()
-        if not text:
-            raise serializers.ValidationError({"text": "Message cannot be empty"})
-        if len(text) > 1000:
-            raise serializers.ValidationError({"text": "Message too long (max 1000 chars)"})
-
         attrs["room"] = room
         return attrs
 
