@@ -1,6 +1,7 @@
 import axios from "./index";
 
 export interface RestorePasswordData {
+  token: string;
   password: string;
   confirm_password: string;
 }
