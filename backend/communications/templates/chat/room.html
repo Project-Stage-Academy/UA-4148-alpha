@@ -17,26 +17,24 @@
         let otherUserId = null;
         let chatSocket = null;
         let reconnectDelay = 2000;
+        let hasFetchedHistory = false;
 
-        const otherUserIdEl = document.getElementById('other-user-id');
-        const currentUserIdEl = document.getElementById('current-user-id');
-
-        if (otherUserIdEl && currentUserIdEl) {
-            try {
-                currentUserId = JSON.parse(currentUserIdEl.textContent);
-                otherUserId = JSON.parse(otherUserIdEl.textContent);
-            } catch (err) {
-                console.error("Error parsing user IDs from JSON script tags:", err);
-            }
+        try {
+            otherUserId = JSON.parse(document.getElementById('other-user-id').textContent);
+            currentUserId = JSON.parse(document.getElementById('current-user-id').textContent);
+            console.log("Loaded currentUserId:", currentUserId);
+        } catch (err) {
+            console.error("Error parsing user IDs:", err);
         }
 
         const chatLog = document.querySelector('#chat-log');
         const messageInputDom = document.querySelector('#chat-message-input');
         const messageSubmitButton = document.querySelector('#chat-message-submit');
 
-        function appendLog(text) {
+        function appendLog(text, cssClass = "") {
             const newLine = document.createElement("div");
             newLine.textContent = text;
+            if (cssClass) newLine.classList.add(cssClass);
             chatLog.appendChild(newLine);
             chatLog.scrollTop = chatLog.scrollHeight;
         }
@@ -69,12 +67,17 @@
         function renderMessage(msg) {
             const name = `${msg.first_name} ${msg.last_name}`;
             const time = getDateTime(msg.timestamp);
-            appendLog(`${name}: ${msg.text}    ${time}`);
+
+            if (String(msg.sender_id) === String(currentUserId)) {
+                appendLog(`Me: ${msg.text}    ${time}`, "my-message");
+            } else {
+                appendLog(`${name}: ${msg.text}    ${time}`, "other-message");
+            }
         }
 
         function initChatSocket() {
-            if (!otherUserId || !currentUserId) {
-                alert("Missing user information for chat.");
+            if (!otherUserId) {
+                alert("Missing user ID for chat.");
                 return;
             }
 
@@ -103,10 +106,12 @@
                             renderMessage(data);
                             break;
                         case "history":
-                            data.messages.forEach(renderMessage);
+                            if (!hasFetchedHistory) {
+                                data.messages.forEach(renderMessage);
+                                hasFetchedHistory = true;
+                            }
                             break;
                         case "read":
-                            // Optional: mark messages visually as read
                             console.log("Read messages:", data.message_ids);
                             break;
                         case "error":
@@ -121,6 +126,7 @@
             };
 
             chatSocket.onclose = () => {
+                hasFetchedHistory = false;
                 messageSubmitButton.disabled = true;
                 appendLog(`[Disconnected, retrying in ${reconnectDelay / 1000} seconds...]`);
                 setTimeout(() => {
