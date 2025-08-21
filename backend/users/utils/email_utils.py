@@ -33,7 +33,6 @@ def send_activation_email(token=str, recipient_email=str, frontend_url=str):
     send_mail(
         subject = "Activate your account",
         message = plain_message,
-        html_message = html_message,
         from_email = settings.DEFAULT_FROM_EMAIL,
         recipient_list = [recipient_email],
         html_message = html_message,
