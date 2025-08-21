@@ -7,17 +7,21 @@ from .serializers import ViewedStartupSerializer, StartupProfileSerializer
 from .permissions import IsInvestor
 from django.utils import timezone
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.pagination import LimitOffsetPagination
+
+class ViewedStartupPagination(LimitOffsetPagination):
+    default_limit = 10   
+    max_limit = 50
 
 class ViewedStartupListView(generics.ListAPIView):
     serializer_class = ViewedStartupSerializer
     permission_classes = [IsInvestor]
-
+    pagination_class = ViewedStartupPagination
+    
     def get_queryset(self):
-        limit = self.request.query_params.get("limit")
-        qs = ViewedStartup.objects.filter(user=self.request.user).order_by("-viewed_at")
-        if limit:
-            return qs[: int(limit)]
-        return qs
+        return ViewedStartup.objects.filter(
+            user=self.request.user
+        ).order_by("-viewed_at")
 
 
 class ViewedStartupCreateView(APIView):
@@ -55,14 +59,11 @@ class StartupViewSet(ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         response = super().retrieve(request, *args, **kwargs)
 
-        # Track view якщо користувач інвестор
-        if (
-            request.user.is_authenticated
-            and request.user.role
-            and request.user.role.role == "investor"
-        ):
+        if request.user.is_authenticated and request.user.is_investor():
             startup = self.get_object()
-            obj, created = ViewedStartup.objects.get_or_create(user=request.user, startup=startup)
+            obj, created = ViewedStartup.objects.get_or_create(
+                user=request.user, startup=startup
+            )
             if not created:
                 obj.viewed_at = timezone.now()
                 obj.save()

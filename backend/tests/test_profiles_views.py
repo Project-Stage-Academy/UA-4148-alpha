@@ -28,15 +28,16 @@ def test_startup_view_logged(api_client, create_investor, create_startup):
 @pytest.mark.django_db
 def test_list_recently_viewed_startups(api_client, create_investor, create_startup):
     investor = create_investor(email="investor2@test.com", username="investor2")
-    startup = create_startup(user=investor, company_name="Startup 2")  # викликаємо функцію-фабрику
+    startup = create_startup(user=investor, company_name="Startup 2")
 
     api_client.force_authenticate(user=investor)
     api_client.post(f"/api/profiles/startups/view/{startup.id}")
 
     response = api_client.get("/api/profiles/startups/viewed")
+    results = response.data["results"]
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]["company_name"] == startup.company_name
+    assert len(results) == 1
+    assert results[0]["company_name"] == startup.company_name
 
 
 @pytest.mark.django_db
@@ -52,7 +53,8 @@ def test_clear_viewed_startups(api_client, create_investor, create_startup):
     assert "cleared" in response.data["message"]
 
     response = api_client.get("/api/profiles/startups/viewed")
-    assert len(response.data) == 0
+    results = response.data["results"]
+    assert len(results) == 0
 
 
 @pytest.mark.django_db

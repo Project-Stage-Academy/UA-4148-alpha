@@ -42,7 +42,14 @@ class UserProfile(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-
+    
+    def is_investor(self):
+        return self.role and self.role.role == "investor"
+    
+    def is_startup(self):
+        return self.role and self.role.role == "startup"
+    
+    
     class Meta:
         verbose_name = 'User Profile'
         verbose_name_plural = 'User Profiles'
@@ -50,3 +57,6 @@ class UserProfile(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+    def is_investor(self):
+        return self.role and self.role.role == "investor"
