@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 
-def send_activation_email(token: str, recipient_email: str):
+def send_activation_email(token, recipient_email):
     """
     Sends an activation email with HTML and plain text versions.
     """
