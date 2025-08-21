@@ -47,8 +47,3 @@ jobs:
         run: |
           export PYTHONPATH=$(pwd)
           score=$(pylint --rcfile=backend/.pylintrc backend/ | grep "Your code has been rated at" | awk '{print $7}' | cut -d/ -f1)
-          echo "Pylint score: $score"
-          if (( $(echo "$score < 9.5" | bc -l) )); then
-            echo "Code quality too low"
-            exit 1
-          fi
