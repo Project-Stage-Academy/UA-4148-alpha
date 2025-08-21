@@ -26,6 +26,15 @@ class StartupProject(models.Model):
     def __str__(self):
         return self.subject
 
+class ProjectRevision(models.Model):
+    project = models.ForeignKey(StartupProject, on_delete=models.CASCADE, related_name="revisions")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    changes = models.JSONField() 
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Revision of {self.project.subject} at {self.updated_at}"
+
 class SavedStartup(models.Model):
     startup = models.ForeignKey(StartupProfile, on_delete=models.CASCADE)
     investor = models.ForeignKey(InvestorProfile, on_delete=models.CASCADE)

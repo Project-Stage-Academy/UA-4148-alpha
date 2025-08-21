@@ -24,6 +24,7 @@ services:
       - MONGO_PORT=${MONGO_PORT}
       - MONGO_DB_NAME=${MONGO_DB_NAME}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=config.settings
 
   db:
     image: postgres:15
