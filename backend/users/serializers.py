@@ -4,9 +4,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
-from users.models import PasswordResetToken, UserProfile, UserRole
 from profiles.models import Industry, InvestorProfile, Location, StartupProfile
-
+from users.models import PasswordResetToken, UserProfile, UserRole
 from users.utils import verify_reset_token
 
 
@@ -21,15 +20,12 @@ class UserRoleSerializer(serializers.ModelSerializer):
         """
         valid_roles = dict(UserRole.ROLE_CHOICES).keys()
         if role not in valid_roles:
-            raise serializers.ValidationError(
-                f"Available roles: {list(valid_roles)}"
-            )
+            raise serializers.ValidationError(f"Available roles: {list(valid_roles)}")
         if UserRole.objects.filter(role=role).exists():
-            raise serializers.ValidationError(
-                f"Role '{role}' already exists."
-            )
-        
+            raise serializers.ValidationError(f"Role '{role}' already exists.")
+
         return role
+
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for reading basic user profile information."""
@@ -127,7 +123,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 try:
                     return model.objects.get(id=object_id)
                 except model.DoesNotExist:
-                    raise serializers.ValidationError({field_name: f"Invalid {field_name}"})
+                    raise serializers.ValidationError(
+                        {field_name: f"Invalid {field_name}"}
+                    )
 
             industry = get_validation_industry_object_id(
                 Industry, industry_id, "industry_id"

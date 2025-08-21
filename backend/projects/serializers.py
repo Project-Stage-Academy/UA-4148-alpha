@@ -11,6 +11,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     fields such as the project's status, startup name, and investor name.
 
     """
+
     status = serializers.CharField(source="status.status", read_only=True)
     startup_name = serializers.CharField(source="startup.company_name", read_only=True)
     investor_name = serializers.CharField(

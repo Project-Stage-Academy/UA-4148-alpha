@@ -10,6 +10,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 User = get_user_model()
 
+
 @database_sync_to_async
 def get_user(user_id):
     """Asynchronously get the user by ID, or None if not found."""
