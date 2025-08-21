@@ -7,7 +7,7 @@ def send_activation_email(token, recipient_email):
     Sends an activation email with HTML and plain text versions.
     """
     
-    activation_url = f"settings.FRONTEND_URL}/verify-email?token={token}"
+    activation_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
     
     plain_message = (
         f"Hello!\n\n"
