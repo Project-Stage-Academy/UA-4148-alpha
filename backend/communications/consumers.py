@@ -1,4 +1,5 @@
 import json
+
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from django.utils import timezone
@@ -120,6 +121,13 @@ def mark_messages_as_read(room, user_id, message_ids):
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    """
+    WebSocket consumer for real-time chat between authenticated users.
+
+    Handles connecting, disconnecting, receiving messages from clients,
+    and broadcasting messages to the chat room group.
+    """
+
     async def connect(self):
         """
         Handles a new WebSocket connection.

@@ -1,5 +1,7 @@
 from django.core import signing
+
 from users.models import UserProfile
+
 
 def generate_activation_token(user):
     """
@@ -11,16 +13,19 @@ def generate_activation_token(user):
     token = signer.sign_object(data_for_activation)
     return token
 
-def verify_activation_token(token, max_age = 86400): # max_age = 24 hours in seconds
+
+def verify_activation_token(token, max_age=86400):
     """
     Check email confirmation token.
     Returns user if token is valid, otherwise None + message.
+
+    max_age 86400 = 24 hours in seconds
     """
-    
+
     signer = signing.TimestampSigner(salt="email-activation")
-    
+
     try:
-        data_for_activation = signer.unsign_object(token, max_age = max_age)
+        data_for_activation = signer.unsign_object(token, max_age=max_age)
     except signing.SignatureExpired:
         return None, "The token has expired"
     except signing.BadSignature:

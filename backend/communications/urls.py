@@ -1,7 +1,6 @@
 from django.urls import path
 
-from . import views
-
+from communications.views import index, room
 
 urlpatterns = [
     path("", views.index, name="index"),

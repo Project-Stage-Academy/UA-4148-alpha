@@ -1,8 +1,14 @@
 from django.contrib.auth.backends import ModelBackend
+
 from users.models import UserProfile
 
+
 class EmailBackend(ModelBackend):
-    def authenticate(self, request, email=None, password=None, **kwargs):
+    """Authenticate users using their email and password instead of username."""
+
+    def authenticate(
+        self, request, email=None, password=None, **kwargs
+    ):  # pylint: disable=W0237
         try:
             user = UserProfile.objects.get(email=email)
         except UserProfile.DoesNotExist:
@@ -11,4 +17,3 @@ class EmailBackend(ModelBackend):
         if user.check_password(password):
             return user
         return None
-    

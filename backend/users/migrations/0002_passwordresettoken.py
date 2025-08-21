@@ -8,24 +8,42 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0001_initial'),
+        ("users", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PasswordResetToken',
+            name="PasswordResetToken",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('token_hash', models.CharField(max_length=64, unique=True)),
-                ('expires_at', models.DateTimeField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("token_hash", models.CharField(max_length=64, unique=True)),
+                ("expires_at", models.DateTimeField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Password reset token',
-                'verbose_name_plural': 'Password reset tokens',
-                'db_table': 'password_reset_token',
-                'indexes': [models.Index(fields=['token_hash'], name='password_re_token_h_a495e0_idx')],
+                "verbose_name": "Password reset token",
+                "verbose_name_plural": "Password reset tokens",
+                "db_table": "password_reset_token",
+                "indexes": [
+                    models.Index(
+                        fields=["token_hash"], name="password_re_token_h_a495e0_idx"
+                    )
+                ],
             },
         ),
     ]
