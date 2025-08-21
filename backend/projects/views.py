@@ -20,13 +20,13 @@ class ProjectViewSet(viewsets.ViewSet):
     ]
 
     def list(self, request):
-        serializer = StartupProjectSerializer(self.mock_projects, many=True)
+        serializer = ProjectSerializer(self.mock_projects, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
         project = next((p for p in self.mock_projects if str(p["id"]) == str(pk)), None)
         if project:
-            serializer = StartupProjectSerializer(project)
+            serializer = ProjectSerializer(project)
             return Response(serializer.data)
         return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -47,9 +47,9 @@ class ProjectViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = StartupProjectSerializer(project, data=request.data, partial=True)
+        serializer = ProjectSerializer(project, data=request.data, partial=True)
         if serializer.is_valid():
-            old_data = StartupProjectSerializer(project).data
+            old_data = ProjectSerializer(project).data
             serializer.save()
             new_data = serializer.data
 
