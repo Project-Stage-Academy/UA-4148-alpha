@@ -14,10 +14,12 @@ def generate_activation_token(user):
     return token
 
 
-def verify_activation_token(token, max_age=86400):  # max_age = 24 hours in seconds
+def verify_activation_token(token, max_age=86400):
     """
     Check email confirmation token.
     Returns user if token is valid, otherwise None + message.
+
+    max_age 86400 = 24 hours in seconds
     """
 
     signer = signing.TimestampSigner(salt="email-activation")
