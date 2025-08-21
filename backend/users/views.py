@@ -1,20 +1,31 @@
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
-from rest_framework import status, viewsets
+from django.shortcuts import redirect, render
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from users.serializers import (PasswordResetRequestSerializer,
-                               PasswordResetSubmissionSerializer,
-                               TokenVerificationSerializer,
-                               UserRegistrationSerializer, UserSerializer)
-from users.utils.email_activation import (generate_activation_token,
-                                          verify_activation_token)
+from users.serializers import (
+    PasswordResetRequestSerializer,
+    PasswordResetSubmissionSerializer,
+    TokenVerificationSerializer,
+    UserRegistrationSerializer,
+    UserRoleSerializer,
+    UserSerializer,
+)
+from users.utils.email_activation import (
+    generate_activation_token,
+    verify_activation_token,
+)
 from users.utils.email_utils import send_activation_email
 
 from .models import UserProfile, UserRole
@@ -41,6 +52,7 @@ class UserViewSet(viewsets.ViewSet):
         if self.action == "me":
             return [IsAuthenticated(), InvestorRolePermission()]
         if self.action in [
+            "create_role",
             "login",
             "register",
             "reset_password",
@@ -62,6 +74,23 @@ class UserViewSet(viewsets.ViewSet):
 
         serializer = UserSerializer(user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # TODO: only admins can create roles. remove create_role from get_permissions once implemented
+    @action(detail=False, methods=["post"], url_path="create-role")
+    def create_role(self, request):
+        """
+        Create the user's role.
+        """
+        serializer = UserRoleSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            role = serializer.validated_data["role"]
+            new_role = UserRole.objects.create(role=role)
+            return Response(
+                {"message": f"Role {new_role.role} created."},
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], url_path="switch-role")
     def switch_role(self, request):

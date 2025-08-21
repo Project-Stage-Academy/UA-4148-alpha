@@ -4,8 +4,7 @@ import pytest
 from django.utils import timezone
 
 from users.models import PasswordResetToken, UserProfile
-from users.utils.generate_password_reset_token import \
-    generate_password_reset_token
+from users.utils.generate_password_reset_token import generate_password_reset_token
 
 
 @pytest.mark.django_db

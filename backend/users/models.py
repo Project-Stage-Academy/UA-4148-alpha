@@ -35,7 +35,6 @@ class UserRole(models.Model):
     ROLE_CHOICES = [
         ("investor", "Investor"),
         ("startup", "Startup"),
-        ("tester", "Tester"),
     ]
     role = models.CharField(max_length=15, unique=True, choices=ROLE_CHOICES)
 
