@@ -85,5 +85,29 @@ We are committed to delivering a platform that is not just a marketplace for ide
 
 ### Database Schema
 
+
 <img width="1470" height="725" alt="starthub" src="https://github.com/user-attachments/assets/d4c57b19-6e73-4988-b43a-37601a3110c8" />
 
+**Step 1: Installation**
+
+**Action**: Install pylint and pylint-django via pip. Pylint-django is a Pylint plugin that understands Django's structure and provides relevant linting.
+
+**Command:**
+
+pip install pylint pylint-django
+
+**Step 2: Running the linter**
+
+**Action**: To check your code with Pylint, run the following command from the project root
+
+**Command:**
+
+pylint --load-plugins pylint_django backend/
+
+Replace backend/ with the name of your Django project folder if it differs.
+
+
+**GitHub Actions**
+
+Pylint is also run automatically on each push or pull request to the developer branch using GitHub Actions.
+You can find the configuration in .github/workflows/pylint.yml.
