@@ -27,33 +27,36 @@ def get_or_create_room(user, other_user):
         raise PermissionError("User must be authenticated.")
     if not other_user:
         raise ValueError("Other participant must be valid")
-    if getattr(user, "role", None) != "investor":
-        raise PermissionError("Only investors can initiate conversations")
-    if getattr(user, "role", None) == getattr(other_user, "role", None):
-        raise PermissionError("Conversation must be between investor and startup")
 
     room_name = f"chat_{min(user.id, other_user.id)}_{max(user.id, other_user.id)}"
     room = Room.objects(name=room_name).first()
 
-    if not room:
-        room = Room(
-            name=room_name,
-            participants=[
-                {
-                    "id": str(user.id),
-                    "username": user.username,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                },
-                {
-                    "id": str(other_user.id),
-                    "username": other_user.username,
-                    "first_name": other_user.first_name,
-                    "last_name": other_user.last_name,
-                },
-            ],
-        )
-        room.save()
+    if room:
+        return room
+
+    if getattr(user.role, "role", None) != "investor":
+        raise PermissionError("Only investors can initiate conversations")
+    if getattr(user.role, "role", None) == getattr(other_user.role, "role", None):
+        raise PermissionError("Conversation must be between investor and startup")
+
+    room = Room(
+        name=room_name,
+        participants=[
+            {
+                "id": str(user.id),
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+            },
+            {
+                "id": str(other_user.id),
+                "username": other_user.username,
+                "first_name": other_user.first_name,
+                "last_name": other_user.last_name,
+            },
+        ],
+    )
+    room.save()
     return room
 
 @sync_to_async
@@ -128,20 +131,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         other_user_id = self.scope["url_route"]["kwargs"].get("other_user_id")
 
         if not self.user.is_authenticated or not other_user_id:
-            await self.send(text_data=json.dumps({"error": "Authentication required"}))
             await self.close()
             return
 
         self.other_user = await get_user(other_user_id)
         if not self.other_user:
-            await self.send(text_data=json.dumps({"error": "Other user not found"}))
             await self.close()
             return
 
         try:
             self.room = await get_or_create_room(self.user, self.other_user)
         except PermissionError as e:
-            await self.send(text_data=json.dumps({"error": str(e)}))
             await self.close()
             return
 
