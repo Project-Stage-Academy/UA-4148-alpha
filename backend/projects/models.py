@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db import models
 
 from profiles.models import InvestorProfile, StartupProfile
@@ -7,7 +6,7 @@ from profiles.models import InvestorProfile, StartupProfile
 class ProjectStatus(models.Model):
     """Represents the status of a startup project, e.g., 'Pending', 'Funded'."""
 
-    status = models.CharField(max_length=150)
+    status = models.CharField(max_length=150, unique=True)
 
     def __str__(self):
         return self.status
@@ -34,7 +33,7 @@ class StartupProject(models.Model):
     startup = models.ForeignKey(
         StartupProfile, on_delete=models.CASCADE, related_name="projects"
     )
-    investor = models.ForeignKey(
+    investor = models.ForeignKey(   # TODO: delete
         InvestorProfile,
         on_delete=models.SET_NULL,
         null=True,
@@ -52,6 +51,45 @@ class SavedStartup(models.Model):
     startup = models.ForeignKey(StartupProfile, on_delete=models.CASCADE)
     investor = models.ForeignKey(InvestorProfile, on_delete=models.CASCADE)
     saved_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["investor", "startup"], name="uniq_investor_startup") # protection against duplicates: one investor cannot save one startup twice
+        ]
+        ordering = ["-saved_at"]
+        verbose_name = "Saved startup"
+        verbose_name_plural = "Saved startups"
 
     def __str__(self):
         return f"{self.investor.company_name} saved {self.startup.company_name}"
+    
+class SavedProject(models.Model):
+    """Intermediate table for represents a project saved by investor (many-to-many relation)."""
+    
+    investor = models.ForeignKey(
+        InvestorProfile,
+        on_delete=models.CASCADE,
+        related_name="saved_projects"
+    )
+    
+    project = models.ForeignKey(
+        StartupProject,
+        on_delete=models.CASCADE,
+        related_name="saved_by_investors"
+    )
+    
+    saved_at = models.DateTimeField(
+        auto_now_add = True,
+        help_text="Date and time the project was saved"
+    )
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["investor", "project"], name="uniq_investor_project") # protection against duplicates: one investor cannot save one startup twice
+        ]
+        ordering = ["-saved_at"]
+        verbose_name = "Saved project"
+        verbose_name_plural = "Saved projects"
+
+    def __str__(self):
+        return f"{self.investor.company_name} saved project {self.project.subject} from {self.project.startup.company_name}"
