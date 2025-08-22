@@ -7,7 +7,12 @@ from profiles.models import InvestorProfile, StartupProfile
 class ProjectStatus(models.Model):
     """Represents the status of a startup project, e.g., 'Pending', 'Funded'."""
 
-    status = models.CharField(max_length=150)
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Funded", "Funded"),
+    ]
+
+    status = models.CharField(max_length=150, choices=STATUS_CHOICES, unique=True)
 
     def __str__(self):
         return self.status
