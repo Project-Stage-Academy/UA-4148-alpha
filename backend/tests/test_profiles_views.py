@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 from rest_framework.test import APIClient
 from django.urls import reverse
 from projects.models import StartupProject, ProjectRevision
@@ -38,7 +38,8 @@ def test_update_project_creates_revision(api_client, startup_project, investor_u
 
     with patch("projects.views.get_channel_layer") as mock_layer:
         mock_channel = mock_layer.return_value
-        mock_group_send = mock_channel.group_send
+        mock_channel.group_send = AsyncMock()  
+
         response = api_client.post(url, data)
 
         assert response.status_code == 200
@@ -48,4 +49,4 @@ def test_update_project_creates_revision(api_client, startup_project, investor_u
         assert revision.changes["subject"]["old"] == "Old Project"
         assert revision.changes["subject"]["new"] == "New Project"
 
-        mock_group_send.assert_called_once()
+        mock_channel.group_send.assert_called_once()

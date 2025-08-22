@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from backend.projects.models import StartupProject
+from .models import StartupProject
 
 
 class ProjectSerializer(serializers.ModelSerializer):
