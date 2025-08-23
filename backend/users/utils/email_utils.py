@@ -33,15 +33,16 @@ def send_activation_email(token, recipient_email):
     </body>
     </html>
     """
-    
-    # The send_mail() returns 0 (no email was sent) or 1 (the email was sent successfully).
-    send_letter = send_mail(
+
+
+    send_mail(
         subject = "Verify your email",
         message = plain_message,
-        html_message = html_message,
         from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com"),
         recipient_list = [recipient_email],
-        fail_silently =True, #TODO: Due to the lack of DEFAULT_FROM_EMAIL, set it to True for now so that these errors do not distract
+        html_message = html_message,
+        # TODO: Due to the lack of DEFAULT_FROM_EMAIL,
+        # set it to True for now so that these errors do not distract
+        fail_silently =True,
     )
-    
-    return send_letter == 1 #Will return True (successful sending) or False (mail not sent)
+    return send_letter == 1
