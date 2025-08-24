@@ -43,7 +43,7 @@ class SavedProject(models.Model):
     investor = models.ForeignKey(
         InvestorProfile,
         on_delete=models.CASCADE,
-        related_name="saved_projects"
+        related_name="investor_saved_projects"
     )
     
     project = models.ForeignKey(
