@@ -61,7 +61,6 @@ class InvestorProfile(models.Model):
     saved_projects = models.ManyToManyField(
         'projects.StartupProject',
         through='projects.SavedProject',
-        related_name='saved_by_investors'
     )
 
     def __str__(self):
