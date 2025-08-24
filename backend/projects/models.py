@@ -33,13 +33,6 @@ class StartupProject(models.Model):
     startup = models.ForeignKey(
         StartupProfile, on_delete=models.CASCADE, related_name="projects"
     )
-    investor = models.ForeignKey(   # TODO: delete
-        InvestorProfile,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="investments",
-    )
 
     def __str__(self):
         return self.subject
