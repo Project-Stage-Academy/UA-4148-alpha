@@ -1,12 +1,15 @@
-from django.utils import timezone
+import bleach
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .mongo_models import Room, Message
+from .mongo_models import Room
+from .utils.generate_room_name import generate_room_name
+from .utils.save_message import save_message
 
 User = get_user_model()
 
+
 class ParticipantSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.CharField()
     username = serializers.CharField()
     first_name = serializers.CharField(allow_blank=True, required=False)
     last_name = serializers.CharField(allow_blank=True, required=False)
@@ -19,59 +22,11 @@ class RoomSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField(read_only=True)
     name = serializers.CharField(read_only=True)
 
-    def validate_participants(self, value):
-        """
-        Validate that:
-        - Exactly 2 participants exist
-        - Both exist in DB
-        - Current user is included
-        - One is investor, one is startup
-        """
-        participant_ids = []
-        for p in value:
-            try:
-                participant_ids.append(int(p["id"]))
-            except (KeyError, ValueError, TypeError):
-                raise serializers.ValidationError("Invalid participant ID")
-
-        if len(participant_ids) != 2:
-            raise serializers.ValidationError("Room must have exactly 2 participants")
-
-        existing_users = list(User.objects.filter(id__in=participant_ids))
-        if len(existing_users) != 2:
-            raise serializers.ValidationError("One or more participants do not exist")
-
-        request_user = self.context["request"].user
-        if request_user.id not in participant_ids:
-            raise serializers.ValidationError("You must be a participant in the room")
-
-        roles = {u.role for u in existing_users}
-        if roles != {"investor", "startup"}:
-            raise serializers.ValidationError("Room must be between an investor and a startup")
-
-        return value
-
-    def create(self, validated_data):
-        participants_data = validated_data["participants"]
-        participant_ids = sorted(int(p["id"]) for p in participants_data)
-
-        room_name = f"chat_{participant_ids[0]}_{participant_ids[1]}"
-
-        room = Room.objects(name=room_name).first()
-        if not room:
-            room = Room(
-                name=room_name,
-                participants=participants_data,
-                created_at=timezone.now(),
-                updated_at=timezone.now(),
-            )
-            room.save()
-        return room
-
 
 class MessageSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    room_id = serializers.CharField(write_only=True)
+    room_id = serializers.CharField(write_only=True, required=False)
+    other_user_id = serializers.CharField(write_only=True, required=False)
     sender_id = serializers.CharField(read_only=True)
     first_name = serializers.CharField(read_only=True)
     last_name = serializers.CharField(read_only=True)
@@ -82,36 +37,80 @@ class MessageSerializer(serializers.Serializer):
     def validate(self, attrs):
         room_id = attrs.get("room_id")
         user = self.context["request"].user
+        other_user_id = attrs.get("other_user_id")
 
-        try:
-            room = Room.objects.get(id=room_id)
-        except Room.DoesNotExist:
-            raise serializers.ValidationError({"room_id": "Room not found."})
+        if not (other_user_id or room_id):
+            raise serializers.ValidationError(
+                "Either room_id or other_user_id is required."
+            )
 
-        if not any(str(p["id"]) == str(user.id) for p in room.participants):
-            raise serializers.ValidationError("You are not a participant of this room.")
+        if room_id:
+            try:
+                room = Room.objects.get(id=room_id)
+            except Room.DoesNotExist:
+                raise serializers.ValidationError({"room_id": "Room not found."})
+            if not any(str(p["id"]) == str(user.id) for p in room.participants):
+                raise serializers.ValidationError("You are not a participant of this room.")
+            attrs["room"] = room
+
+        else:
+            if str(other_user_id) == str(user.id):
+                raise serializers.ValidationError("Cannot message yourself.")
+
+            try:
+                other_user = User.objects.get(id=other_user_id)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({"other_user_id": "Receiver not found."})
+
+            sender_role = getattr(user.role, "role", None)
+            receiver_role = getattr(other_user.role, "role", None)
+
+            if sender_role not in {"investor", "startup"} or receiver_role not in {"investor", "startup"}:
+                raise serializers.ValidationError("Messaging allowed only between investor and startup.")
+            if sender_role == receiver_role:
+                raise serializers.ValidationError("Messaging allowed only between investor and startup.")
+
+            try:
+                room_name = generate_room_name(user, other_user)
+            except ValueError as e:
+                raise serializers.ValidationError(str(e))
+
+            room = Room.objects(name=room_name).first()
+            if not room:
+                if sender_role != "investor":
+                    raise serializers.ValidationError("Only investors can start a new conversation.")
+                participants = [
+                    {
+                        "id": str(user.id),
+                        "username": user.username,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                    },
+                    {
+                        "id": str(other_user.id),
+                        "username": other_user.username,
+                        "first_name": other_user.first_name,
+                        "last_name": other_user.last_name,
+                    },
+                ]
+                room = Room(name=room_name, participants=participants)
+                room.save()
+
+            attrs["room"] = room
 
         text = attrs.get("text", "").strip()
         if not text:
             raise serializers.ValidationError({"text": "Message cannot be empty"})
         if len(text) > 1000:
-            raise serializers.ValidationError({"text": "Message too long (max 1000 chars)"})
+            raise serializers.ValidationError({"text": "Message is too long (max 1000 chars)"})
+        sanitized_text = bleach.clean(text)
+        attrs["text"] = sanitized_text
 
-        attrs["room"] = room
         return attrs
 
     def create(self, validated_data):
         user = self.context["request"].user
         room = validated_data["room"]
+        text = validated_data["text"]
 
-        message = Message(
-            room=room,
-            sender_id=str(user.id),
-            sender_first_name=user.first_name,
-            sender_last_name=user.last_name,
-            text=validated_data["text"],
-            timestamp=timezone.now(),
-            is_read=False,
-        )
-        message.save()
-        return message
+        return save_message(room, user, text)

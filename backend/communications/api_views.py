@@ -7,43 +7,74 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from .mongo_models import Room, Message
+from .permissions import IsRoomParticipant
 from .serializers import RoomSerializer, MessageSerializer
 
-def _user_in_room(room: Room, user_id):
-    """
-    Check membership safely, ids stored as strings in Mongo.
-    """
-    return any(str(p.get("id")) == str(user_id) for p in room.participants or [])
+User = get_user_model()
 
 
-class RoomViewSet(viewsets.ViewSet):
+class RoomViewSet(viewsets.ModelViewSet):
     """
     Conversations (Rooms)
     """
-    permission_classes = [IsAuthenticated]
+    serializer_class = RoomSerializer
 
-    def list(self, request):
+    def get_permissions(self):
         """
-        List all rooms the user participates in (newest first).
+        Only authenticated users can access room endpoints.
+        For actions that involve a specific room (retrieve, messages, mark_as_read),
+        the user must also be a participant.
         """
-        rooms = Room.objects(participants__id=str(request.user.id)).order_by("-updated_at")
-        serializer = RoomSerializer(rooms, many=True)
-        return Response(serializer.data)
+        if self.action in ["retrieve", "messages", "mark_as_read"]:
+            return [IsAuthenticated(), IsRoomParticipant()]
+        return [IsAuthenticated()]
 
-    @action(detail=True, methods=["get"], url_path="messages")
-    def messages(self, request, pk=None):
+    def get_queryset(self):
         """
-        Retrieve last 50 messages from a room (chronological).
+        Filters rooms where the current user is a participant.
+        """
+        return Room.objects(participants__id=str(self.request.user.id)).order_by("-updated_at")
+
+    def list(self, request, *args, **kwargs):
+        """
+        Returns a list of rooms the current user participates in.
+        """
+        rooms = self.get_queryset()
+        serializer = self.get_serializer(rooms, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        """
+        Retrieve details of a specific room by ID (e.g., participants, timestamps).
         """
         try:
             room = Room.objects.get(id=pk)
         except Room.DoesNotExist:
             return Response({"error": "room not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _user_in_room(room, request.user.id):
-            return Response({"error": "not a participant of this room"}, status=status.HTTP_403_FORBIDDEN)
+        self.check_object_permissions(request, room)
+        serializer = self.get_serializer(room)
+        return Response(serializer.data)
 
-        messages = list(Message.objects(room=room).order_by("-timestamp")[:50])
+    @action(detail=True, methods=["get"], url_path="messages")
+    def messages(self, request, pk=None):
+        """
+        Retrieve message history for a specific room.
+        Supports `?limit=` query param (default: 50).
+        """
+        try:
+            room = Room.objects.get(id=pk)
+        except Room.DoesNotExist:
+            return Response({"error": "room not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, room)
+
+        try:
+            limit = int(request.query_params.get("limit", 50))
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid limit param"}, status=status.HTTP_400_BAD_REQUEST)
+
+        messages = list(Message.objects(room=room).order_by("-timestamp")[:limit])
         messages.reverse()
         return Response(MessageSerializer(messages, many=True).data)
 
@@ -55,10 +86,9 @@ class RoomViewSet(viewsets.ViewSet):
         try:
             room = Room.objects.get(id=pk)
         except Room.DoesNotExist:
-            return Response({"error": "room not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "room not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        if not _user_in_room(room, request.user.id):
-            return Response({"error": "not a participant of this room"}, status=status.HTTP_403_FORBIDDEN)
+        self.check_object_permissions(request, room)
 
         unread = Message.objects(room=room, is_read=False, sender_id__ne=str(request.user.id))
         ids = [str(m.id) for m in unread]
@@ -66,7 +96,7 @@ class RoomViewSet(viewsets.ViewSet):
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
-            f"chat_{room.name}",
+            room.name,
             {"type": "messages_read", "user_id": str(request.user.id), "message_ids": ids},
         )
 
@@ -80,87 +110,34 @@ class RoomViewSet(viewsets.ViewSet):
         )
 
 
-class MessageViewSet(viewsets.ViewSet):
+class MessageViewSet(viewsets.ModelViewSet):
     """
-    Messages (send)
+    Messages (send).
     """
-    permission_classes = [IsAuthenticated]
+    serializer_class = MessageSerializer
+    queryset = Message.objects.none()
 
-    def create(self, request):
+    def get_permissions(self):
+        return [IsAuthenticated()]
+
+    def create(self, request, *args, **kwargs):
         """
-        Send a new message. Auto-creates room if it doesn't exist — but only investors can start.
+        Send a new message.
+        Auto-creates room if it doesn't exist, but only investors can start a conversation.
+        If room exists, both investor & startup can send a message.
         """
-        other_user_id = request.data.get("other_user_id")
-        text = (request.data.get("text") or "").strip()
-
-        if not other_user_id or not text:
-            return Response({"error": "other_user_id and text are required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            other_user_id = int(other_user_id)
-        except (ValueError, TypeError):
-            return Response({"error": "other_user_id must be an integer"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if other_user_id == request.user.id:
-            return Response({"error": "cannot message yourself"}, status=status.HTTP_400_BAD_REQUEST)
-
-        User = get_user_model()
-        try:
-            other_user = User.objects.get(id=other_user_id)
-        except User.DoesNotExist:
-            return Response({"error": "Recipient user not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        sender_role = getattr(getattr(request.user, "role", None), "role", None)
-        receiver_role = getattr(getattr(other_user, "role", None), "role", None)
-
-        if sender_role not in {"investor", "startup"} or receiver_role not in {"investor", "startup"}:
-            return Response({"error": "messaging allowed only between investor and startup"},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        if sender_role == receiver_role:
-            return Response({"error": "messaging allowed only between investor and startup"},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        a, b = sorted([str(request.user.id), str(other_user_id)])
-        room_name = f"chat_{a}_{b}"
-        room = Room.objects(name=room_name).first()
-
-        if not room and sender_role != "investor":
-            return Response({"error": "only investors can start a new conversation"}, status=status.HTTP_403_FORBIDDEN)
-
-        if not room:
-            participants = [
-                {
-                    "id": str(request.user.id),
-                    "username": request.user.username,
-                    "first_name": request.user.first_name,
-                    "last_name": request.user.last_name,
-                },
-                {
-                    "id": str(other_user.id),
-                    "username": other_user.username,
-                    "first_name": other_user.first_name,
-                    "last_name": other_user.last_name,
-                },
-            ]
-            room = Room(name=room_name, participants=participants)
-            room.save()
-
-        message = Message(
-            room=room,
-            sender_id=str(request.user.id),
-            sender_first_name=request.user.first_name,
-            sender_last_name=request.user.last_name,
-            text=text,
-        )
-        message.save()
-
-        serializer = MessageSerializer(message).data
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        message = serializer.save()
+        message_data = MessageSerializer(message).data
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
-            f"chat_{room.name}",
-            {"type": "chat_message", "message": serializer},
+            message.room.name,
+            {"type": "chat_message", "message": message_data},
         )
 
-        return Response(serializer, status=status.HTTP_201_CREATED)
+        return Response(message_data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        return Response({"detail": "Use /rooms/<id>/messages/ to retrieve history."}, status=status.HTTP_400_BAD_REQUEST)
