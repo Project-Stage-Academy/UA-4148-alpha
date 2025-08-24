@@ -4,21 +4,24 @@ on:
   push:
     branches:
       - develop
+  pull_request:
+    branches:
+      - develop
 
 env:
   PYTHON_VERSION: "3.10"
-  DB_NAME: dummy
-  DB_USER: dummy_user
-  DB_PASSWORD: dummy_password
-  DB_HOST: db
+  DB_NAME: test_db
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  DB_HOST: localhost
+  DB_PORT: 5432
   DJANGO_SETTINGS_MODULE: backend.config.settings
-  DJANGO_SECRET_KEY: "dummy-secret-key"
+  DJANGO_SECRET_KEY: "dummy-secret-key-for-ci"
   FRONTEND_URL: http://localhost:5173
   DEFAULT_FROM_EMAIL: noreply@localhost
-  DB_PORT: 5432
-  MONGO_HOST: dummy_mongo
+  MONGO_HOST: localhost
   MONGO_PORT: 27017
-  MONGO_DB_NAME: dummy_chat_db
+  MONGO_DB_NAME: test_chat_db
 
 jobs:
   lint:
@@ -32,7 +35,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Cache pip
+      - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
@@ -61,12 +64,12 @@ jobs:
     needs: lint
 
     services:
-      db:
+      postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: ${{ env.DB_NAME }}
+          POSTGRES_USER: ${{ env.DB_USER }}
           POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-          POSTGRES_DB: ${{ env.DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_NAME }}
         ports:
           - 5432:5432
         options: >-
@@ -96,11 +99,9 @@ jobs:
           --health-retries=5
 
     env:
-      DJANGO_SETTINGS_MODULE: backend.config.settings
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
-      REDIS_URL: redis://localhost:6379
-      MONGO_URL: mongodb://localhost:27017/test_db
-      DJANGO_SECRET_KEY: dummy-secret-key
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      REDIS_URL: redis://${DB_HOST}:6379
+      MONGO_URL: mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB_NAME}
 
     steps:
       - name: Checkout repository
@@ -111,7 +112,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Cache pip
+      - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
@@ -124,10 +125,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
+      - name: Wait for services
+        run: |
+          timeout 60s bash -c 'until nc -z localhost 5432; do sleep 1; done'
+          timeout 60s bash -c 'until nc -z localhost 6379; do sleep 1; done'
+          timeout 60s bash -c 'until nc -z localhost 27017; do sleep 1; done'
+
+      - name: Run Django system checks
+        run: python manage.py check --deploy
+        working-directory: backend
+
       - name: Run migrations
         run: python manage.py migrate --noinput
         working-directory: backend
 
-      - name: Run tests
-        run: python manage.py test
+      - name: Collect static files
+        run: python manage.py collectstatic --noinput --clear
+        working-directory: backend
+        env:
+          DJANGO_SETTINGS_MODULE: backend.config.settings
+
+      - name: Run tests with coverage
+        run: |
+          python manage.py test --verbosity=2
         working-directory: backend
