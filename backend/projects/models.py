@@ -43,25 +43,6 @@ class StartupProject(models.Model):
 
     def __str__(self):
         return self.subject
-
-
-class SavedStartup(models.Model):
-    """Represents a saved startup by an investor for later reference."""
-
-    startup = models.ForeignKey(StartupProfile, on_delete=models.CASCADE)
-    investor = models.ForeignKey(InvestorProfile, on_delete=models.CASCADE)
-    saved_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["investor", "startup"], name="uniq_investor_startup") # protection against duplicates: one investor cannot save one startup twice
-        ]
-        ordering = ["-saved_at"]
-        verbose_name = "Saved startup"
-        verbose_name_plural = "Saved startups"
-
-    def __str__(self):
-        return f"{self.investor.company_name} saved {self.startup.company_name}"
     
 class SavedProject(models.Model):
     """Intermediate table for represents a project saved by investor (many-to-many relation)."""
