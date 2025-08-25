@@ -119,20 +119,15 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run Django system checks
-        run: python manage.py check --deploy
-        working-directory: backend
+        run: python backend/manage.py check --deploy
 
       - name: Run migrations
-        run: python manage.py migrate --noinput
-        working-directory: backend
+        run: python backend/manage.py migrate --noinput
 
       - name: Collect static files
-        run: python manage.py collectstatic --noinput --clear
-        working-directory: backend
+        run: python backend/manage.py collectstatic --noinput --clear
         env:
           DJANGO_SETTINGS_MODULE: ${{ env.DJANGO_SETTINGS_MODULE }}
 
       - name: Run tests with coverage
-        run: |
-          python manage.py test --verbosity=2
-        working-directory: backend
+        run: python backend/manage.py pytest
