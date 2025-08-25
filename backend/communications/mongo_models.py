@@ -1,8 +1,16 @@
 import datetime
 
-from mongoengine import (CASCADE, BooleanField, DateTimeField, DictField,
-                         Document, IntField, ListField, ReferenceField,
-                         StringField)
+from mongoengine import (
+    CASCADE,
+    BooleanField,
+    DateTimeField,
+    DictField,
+    Document,
+    IntField,
+    ListField,
+    ReferenceField,
+    StringField,
+)
 
 
 class Room(Document):

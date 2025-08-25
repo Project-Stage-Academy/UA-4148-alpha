@@ -5,12 +5,13 @@ import pytest
 from django.utils import timezone
 
 from users.models import PasswordResetToken, UserProfile
-from users.serializers import (PasswordResetRequestSerializer,
-                               PasswordResetSubmissionSerializer,
-                               TokenVerificationSerializer,
-                               UserRegistrationSerializer)
-from users.utils.generate_password_reset_token import \
-    generate_password_reset_token
+from users.serializers import (
+    PasswordResetRequestSerializer,
+    PasswordResetSubmissionSerializer,
+    TokenVerificationSerializer,
+    UserRegistrationSerializer,
+)
+from users.utils.generate_password_reset_token import generate_password_reset_token
 from users.utils.verify_reset_token import verify_reset_token
 
 
