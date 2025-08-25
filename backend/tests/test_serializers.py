@@ -94,7 +94,11 @@ def test_token_verification_serializer_valid_and_invalid():
 
     raw_token = "validtoken"
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    PasswordResetToken.objects.create(user=user, token_hash=token_hash, expires_at=timezone.now() + datetime.timedelta(hours=1))
+    PasswordResetToken.objects.create(
+        user=user,
+        token_hash=token_hash,
+        expires_at=timezone.now() + datetime.timedelta(hours=1),
+    )
 
     with patch(
         "users.serializers.verify_reset_token", return_value=(True, "Token is valid")
@@ -123,7 +127,11 @@ def test_password_reset_submission_serializer_valid_and_invalid():
 
     raw_token = "validtoken"
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    PasswordResetToken.objects.create(user=user, token_hash=token_hash, expires_at=timezone.now() + datetime.timedelta(hours=1))
+    PasswordResetToken.objects.create(
+        user=user,
+        token_hash=token_hash,
+        expires_at=timezone.now() + datetime.timedelta(hours=1),
+    )
 
     from unittest.mock import patch
 

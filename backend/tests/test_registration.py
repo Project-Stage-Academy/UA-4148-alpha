@@ -14,6 +14,7 @@ NEW_USER = {
     "role": None,
 }
 
+
 @pytest.mark.django_db
 class TestUserRegistration:
     """Test cases for the user registration endpoint."""
@@ -32,7 +33,7 @@ class TestUserRegistration:
 
     def test_register_password_mismatch(self):
         data = NEW_USER
-        data['confirm_password'] = "WrongPassw0rd"
+        data["confirm_password"] = "WrongPassw0rd"
         response = self.client.post(self.url, data, format="json")
         assert response.status_code == 400
         assert "password" in response.data
