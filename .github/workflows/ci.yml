@@ -15,7 +15,7 @@ env:
   DB_PASSWORD: postgres
   DB_HOST: postgres
   DB_PORT: 5432
-  DJANGO_SETTINGS_MODULE: backend.config.settings
+  DJANGO_SETTINGS_MODULE: config.settings
   DJANGO_SECRET_KEY: "dummy-secret-key-for-ci"
   DEFAULT_FROM_EMAIL: noreply@localhost
   MONGO_HOST: mongo
@@ -119,15 +119,15 @@ jobs:
           pip install -r backend/requirements.txt
 
       - name: Run Django system checks
-        run: python manage.py check --deploy
+        run: python backend/manage.py check --deploy
 
       - name: Run migrations
-        run: python manage.py migrate --noinput
+        run: python backend/manage.py migrate --noinput
 
       - name: Collect static files
-        run: python manage.py collectstatic --noinput --clear
+        run: python backend/manage.py collectstatic --noinput --clear
         env:
           DJANGO_SETTINGS_MODULE: ${{ env.DJANGO_SETTINGS_MODULE }}
 
       - name: Run tests with coverage
-        run: python manage.py pytest
+        run: python backend/manage.py pytest
