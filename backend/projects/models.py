@@ -3,15 +3,6 @@ from django.db import models
 from profiles.models import InvestorProfile, StartupProfile
 
 
-class ProjectStatus(models.Model):
-    """Represents the status of a startup project, e.g., 'Pending', 'Funded'."""
-
-    status = models.CharField(max_length=150, unique=True)
-
-    def __str__(self):
-        return self.status
-
-
 class StartupProject(models.Model):
     """Represents a project created by a startup, including investment details."""
 
@@ -23,13 +14,17 @@ class StartupProject(models.Model):
     views_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        FUNDED = "FUNDED", "Funded"
 
-    status = models.ForeignKey(
-        ProjectStatus,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="project_statuses",
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
     )
+    
     startup = models.ForeignKey(
         StartupProfile, on_delete=models.CASCADE, related_name="projects"
     )
