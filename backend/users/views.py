@@ -8,24 +8,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
+from rest_framework_simplejwt.token_blacklist.models import (BlacklistedToken,
+                                                             OutstandingToken)
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from users.serializers import (
-    PasswordResetRequestSerializer,
-    PasswordResetSubmissionSerializer,
-    TokenVerificationSerializer,
-    UserRegistrationSerializer,
-    UserRoleSerializer,
-    UserSerializer,
-)
-from users.utils.email_activation import (
-    generate_activation_token,
-    verify_activation_token,
-)
+from users.serializers import (PasswordResetRequestSerializer,
+                               PasswordResetSubmissionSerializer,
+                               TokenVerificationSerializer,
+                               UserRegistrationSerializer, UserRoleSerializer,
+                               UserSerializer)
+from users.utils.email_activation import (generate_activation_token,
+                                          verify_activation_token)
 from users.utils.email_utils import send_activation_email
 
 from .models import UserProfile, UserRole

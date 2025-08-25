@@ -6,9 +6,9 @@ def send_activation_email(token, recipient_email):
     """
     Sends an activation email with HTML and plain text versions.
     """
-    
+
     activation_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
-    
+
     plain_message = (
         f"Hello!\n\n"
         f"To activate your account, please click the link below:\n"
@@ -34,15 +34,14 @@ def send_activation_email(token, recipient_email):
     </html>
     """
 
-
     send_mail(
-        subject = "Verify your email",
-        message = plain_message,
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com"),
-        recipient_list = [recipient_email],
-        html_message = html_message,
+        subject="Verify your email",
+        message=plain_message,
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com"),
+        recipient_list=[recipient_email],
+        html_message=html_message,
         # TODO: Due to the lack of DEFAULT_FROM_EMAIL,
         # set it to True for now so that these errors do not distract
-        fail_silently =True,
+        fail_silently=True,
     )
     return send_letter == 1
