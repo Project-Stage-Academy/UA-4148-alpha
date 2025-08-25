@@ -10,7 +10,7 @@ from users.utils.verify_reset_token import verify_reset_token
 
 
 @pytest.fixture
-def test_user(db):
+def user_instance(db):
     return UserProfile.objects.create_user(
         username="testuser", email="test@example.com", password="pass123"
     )

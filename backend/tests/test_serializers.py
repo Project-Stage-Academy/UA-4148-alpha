@@ -26,6 +26,8 @@ def test_user_registration_serializer_valid_and_invalid():
         "email": "newuser@example.com",
         "password": "ComplexPass123!",
         "confirm_password": "ComplexPass123!",
+        "company_name": "Test",
+        "representative_type": "investor",
     }
     serializer = UserRegistrationSerializer(data=valid_data)
     assert serializer.is_valid(), serializer.errors
@@ -35,6 +37,8 @@ def test_user_registration_serializer_valid_and_invalid():
         "email": "newuser2@example.com",
         "password": "ComplexPass123!",
         "confirm_password": "Mismatch123",
+        "company_name": "Test",
+        "representative_type": "investor",
     }
     serializer = UserRegistrationSerializer(data=invalid_password_data)
     assert not serializer.is_valid()
@@ -115,7 +119,6 @@ def test_password_reset_submission_serializer_valid_and_invalid():
     from unittest.mock import patch
 
     valid_data = {
-        "email": user.email,
         "token": "validtoken",
         "password": "ComplexPass123!",
         "confirm_password": "ComplexPass123!",
