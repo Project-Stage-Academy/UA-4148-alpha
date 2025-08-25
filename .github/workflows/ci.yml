@@ -120,17 +120,14 @@ jobs:
 
       - name: Run Django system checks
         run: python manage.py check --deploy
-        working-directory: backend
 
       - name: Run migrations
         run: python manage.py migrate --noinput
-        working-directory: backend
 
       - name: Collect static files
         run: python manage.py collectstatic --noinput --clear
-        working-directory: backend
         env:
-          DJANGO_SETTINGS_MODULE: backend.config.settings
+          DJANGO_SETTINGS_MODULE: ${{ env.DJANGO_SETTINGS_MODULE }}
 
       - name: Run tests with coverage
         run: |
