@@ -64,7 +64,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             
     # action "unfollow" to remove a project from saved
     @action(detail=True, method=["post"], url_path="unfollow")
-    def unfollow(self, request, pk=None):
+    def unfollow_project(self, request, pk=None):
         """
         Allow an authenticated investor to unfollow (remove) a startup project.
         """
