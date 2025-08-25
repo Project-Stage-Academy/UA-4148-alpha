@@ -35,7 +35,7 @@ def send_activation_email(token, recipient_email):
     """
 
 
-    send_mail(
+    send_letter = send_mail(
         subject = "Verify your email",
         message = plain_message,
         from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com"),
