@@ -13,13 +13,13 @@ env:
   DB_NAME: test_db
   DB_USER: postgres
   DB_PASSWORD: postgres
-  DB_HOST: postgres
+  DB_HOST: localhost
   DB_PORT: 5432
   FRONTEND_URL: http://localhost:5173
   DJANGO_SETTINGS_MODULE: config.settings
   DJANGO_SECRET_KEY: "dummy-secret-key-for-ci"
   DEFAULT_FROM_EMAIL: noreply@localhost
-  MONGO_HOST: mongo
+  MONGO_HOST: localhost
   MONGO_PORT: 27017
   MONGO_DB_NAME: test_chat_db
 
@@ -92,7 +92,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://${DB_HOST}:6379
       MONGO_URL: mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB_NAME}
 
 
