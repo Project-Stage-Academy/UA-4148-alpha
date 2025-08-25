@@ -131,4 +131,4 @@ jobs:
           DJANGO_SETTINGS_MODULE: ${{ env.DJANGO_SETTINGS_MODULE }}
 
       - name: Run tests with coverage
-        run: pytest
+        run: python backend/pytest
