@@ -29,7 +29,7 @@ from users.utils.email_activation import (
 from users.utils.email_utils import send_activation_email
 
 from .models import UserProfile, UserRole
-from .permissions import InvestorRolePermission
+from .permissions import InvestorRolePermission, StartupRolePermission
 from .utils import generate_password_reset_token
 
 
@@ -50,6 +50,8 @@ class UserViewSet(viewsets.ViewSet):
         Public access allowed for registration and password reset.
         """
         if self.action == "me":
+            return [IsAuthenticated()]
+        if self.action == "by-role":
             return [IsAuthenticated(), InvestorRolePermission()]
         if self.action in [
             "create_role",
@@ -74,6 +76,24 @@ class UserViewSet(viewsets.ViewSet):
 
         serializer = UserSerializer(user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="by-role")
+    def by_role(self, request):
+        """
+        Returns users filtered by role.
+        """
+        role = request.query_params.get("role")
+        if not role:
+            return Response(
+                {"detail": "Role is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if role not in ("investor", "startup"):
+            return Response(
+                {"detail": "Invalid role value."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        users = UserProfile.objects.filter(role__role=role)
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
     # TODO: only admins can create roles. remove create_role from get_permissions once implemented
     @action(detail=False, methods=["post"], url_path="create-role")
