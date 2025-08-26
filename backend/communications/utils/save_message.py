@@ -14,7 +14,7 @@ def save_message(room, user, text):
         sender_last_name=user.last_name,
         text=sanitized_text,
         timestamp=timezone.now(),
-        is_read=False
+        is_read=False,
     )
     message.save()
     room.updated_at = timezone.now()

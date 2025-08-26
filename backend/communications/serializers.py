@@ -50,7 +50,9 @@ class MessageSerializer(serializers.Serializer):
             except Room.DoesNotExist:
                 raise serializers.ValidationError({"room_id": "Room not found."})
             if not any(str(p["id"]) == str(user.id) for p in room.participants):
-                raise serializers.ValidationError("You are not a participant of this room.")
+                raise serializers.ValidationError(
+                    "You are not a participant of this room."
+                )
             attrs["room"] = room
 
         else:
@@ -60,15 +62,24 @@ class MessageSerializer(serializers.Serializer):
             try:
                 other_user = User.objects.get(id=other_user_id)
             except User.DoesNotExist:
-                raise serializers.ValidationError({"other_user_id": "Receiver not found."})
+                raise serializers.ValidationError(
+                    {"other_user_id": "Receiver not found."}
+                )
 
             sender_role = getattr(user.role, "role", None)
             receiver_role = getattr(other_user.role, "role", None)
 
-            if sender_role not in {"investor", "startup"} or receiver_role not in {"investor", "startup"}:
-                raise serializers.ValidationError("Messaging allowed only between investor and startup.")
+            if sender_role not in {"investor", "startup"} or receiver_role not in {
+                "investor",
+                "startup",
+            }:
+                raise serializers.ValidationError(
+                    "Messaging allowed only between investor and startup."
+                )
             if sender_role == receiver_role:
-                raise serializers.ValidationError("Messaging allowed only between investor and startup.")
+                raise serializers.ValidationError(
+                    "Messaging allowed only between investor and startup."
+                )
 
             try:
                 room_name = generate_room_name(user, other_user)
@@ -78,7 +89,9 @@ class MessageSerializer(serializers.Serializer):
             room = Room.objects(name=room_name).first()
             if not room:
                 if sender_role != "investor":
-                    raise serializers.ValidationError("Only investors can start a new conversation.")
+                    raise serializers.ValidationError(
+                        "Only investors can start a new conversation."
+                    )
                 participants = [
                     {
                         "id": str(user.id),
@@ -102,7 +115,9 @@ class MessageSerializer(serializers.Serializer):
         if not text:
             raise serializers.ValidationError({"text": "Message cannot be empty"})
         if len(text) > 1000:
-            raise serializers.ValidationError({"text": "Message is too long (max 1000 chars)"})
+            raise serializers.ValidationError(
+                {"text": "Message is too long (max 1000 chars)"}
+            )
         sanitized_text = bleach.clean(text)
         attrs["text"] = sanitized_text
 

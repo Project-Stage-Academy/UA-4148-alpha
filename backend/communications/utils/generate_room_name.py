@@ -2,6 +2,7 @@ def generate_room_name(user1, user2):
     """
     Generates a unique room name based on user roles: {investor_id}_{startup_id}.
     """
+
     def get_role_name(user):
         return getattr(user.role, "role", None)
 

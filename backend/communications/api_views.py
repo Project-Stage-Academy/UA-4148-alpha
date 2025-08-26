@@ -17,6 +17,7 @@ class RoomViewSet(viewsets.ModelViewSet):
     """
     Conversations (Rooms)
     """
+
     serializer_class = RoomSerializer
 
     def get_permissions(self):
@@ -33,7 +34,9 @@ class RoomViewSet(viewsets.ModelViewSet):
         """
         Filters rooms where the current user is a participant.
         """
-        return Room.objects(participants__id=str(self.request.user.id)).order_by("-updated_at")
+        return Room.objects(participants__id=str(self.request.user.id)).order_by(
+            "-updated_at"
+        )
 
     def list(self, request, *args, **kwargs):
         """
@@ -50,7 +53,9 @@ class RoomViewSet(viewsets.ModelViewSet):
         try:
             room = Room.objects.get(id=pk)
         except Room.DoesNotExist:
-            return Response({"error": "room not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "room not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         self.check_object_permissions(request, room)
         serializer = self.get_serializer(room)
@@ -65,14 +70,18 @@ class RoomViewSet(viewsets.ModelViewSet):
         try:
             room = Room.objects.get(id=pk)
         except Room.DoesNotExist:
-            return Response({"error": "room not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "room not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         self.check_object_permissions(request, room)
 
         try:
             limit = int(request.query_params.get("limit", 50))
         except (ValueError, TypeError):
-            return Response({"error": "Invalid limit param"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Invalid limit param"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         messages = list(Message.objects(room=room).order_by("-timestamp")[:limit])
         messages.reverse()
@@ -86,25 +95,33 @@ class RoomViewSet(viewsets.ModelViewSet):
         try:
             room = Room.objects.get(id=pk)
         except Room.DoesNotExist:
-            return Response({"error": "room not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "room not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         self.check_object_permissions(request, room)
 
-        unread = Message.objects(room=room, is_read=False, sender_id__ne=str(request.user.id))
+        unread = Message.objects(
+            room=room, is_read=False, sender_id__ne=str(request.user.id)
+        )
         ids = [str(m.id) for m in unread]
         unread.update(set__is_read=True)
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             room.name,
-            {"type": "messages_read", "user_id": str(request.user.id), "message_ids": ids},
+            {
+                "type": "messages_read",
+                "user_id": str(request.user.id),
+                "message_ids": ids,
+            },
         )
 
         return Response(
             {
                 "detail": f"{len(ids)} messages marked as read.",
                 "message_ids": ids,
-                "user_id": str(request.user.id)
+                "user_id": str(request.user.id),
             },
             status=status.HTTP_200_OK,
         )
@@ -114,6 +131,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     Messages (send).
     """
+
     serializer_class = MessageSerializer
     queryset = Message.objects.none()
 
@@ -126,7 +144,9 @@ class MessageViewSet(viewsets.ModelViewSet):
         Auto-creates room if it doesn't exist, but only investors can start a conversation.
         If room exists, both investor & startup can send a message.
         """
-        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer = self.get_serializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         message = serializer.save()
         message_data = MessageSerializer(message).data
@@ -140,4 +160,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         return Response(message_data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
-        return Response({"detail": "Use /rooms/<id>/messages/ to retrieve history."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "Use /rooms/<id>/messages/ to retrieve history."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
