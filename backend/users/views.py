@@ -132,7 +132,7 @@ class UserViewSet(viewsets.ViewSet):
 
             # Generate a token and send a letter
             token = generate_activation_token(user)
-            send_activation_email(token, user.email, settings.FRONTEND_URL)
+            send_activation_email(token, user.email)
 
             # TODO: tokens
             return Response(
