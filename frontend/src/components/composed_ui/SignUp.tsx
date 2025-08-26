@@ -170,6 +170,23 @@ export function SignUpForm({ form }: SignUpFormProps) {
           );
         }}
       />
+      <FormField
+        control={form.control}
+        name="company_name"
+        render={({ field }) => (
+          <FormItem className="gap-1">
+            <FormLabel required>Назва компанiї</FormLabel>
+            <FormControl>
+              <Input
+                className="shadow-none border border-inactive-100 rounded-xs flex focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]"
+                placeholder="Ввeдiть назву компанiї"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <p className="font-display text-sm text-main-black-90 font-light">
         Реєструючись, я погоджуюсь з {/* TODO: add terms-conditions route */}
         <Link className="font-semibold underline" to="/terms-conditions">
