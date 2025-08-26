@@ -31,6 +31,7 @@ export interface SignUpData {
   password: string;
   confirm_password: string;
   role: "1" | "2";
+  company_name: string;
 }
 
 export interface SignUpResponse {
@@ -40,6 +41,9 @@ export interface SignUpResponse {
 }
 
 export async function signUp(data: SignUpData): Promise<SignUpResponse> {
-  const response = await axios.post<SignUpResponse>("/users/register/", data);
+  const response = await axios.post<SignUpResponse>("/users/register/", {
+    ...data,
+    representative_type: data.role === "1" ? "startup" : "investor"
+  });
   return response.data;
 }
