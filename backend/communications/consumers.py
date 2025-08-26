@@ -2,11 +2,16 @@ import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
 from .mongo_models import Room, Message
+from .serializers import MessageSerializer
+from .utils.get_or_create_room import get_or_create_room
+from .utils.save_message import save_message
+
 
 @sync_to_async
 def get_user(user_id):
@@ -18,72 +23,6 @@ def get_user(user_id):
         return User.objects.get(id=user_id)
     except User.DoesNotExist:
         return None
-
-@sync_to_async
-def get_or_create_room(user, other_user):
-    """
-    Retrieve an existing room between two users or create a new one.
-    """
-    if not user or not getattr(user, "is_authenticated", False):
-        raise PermissionError("User must be authenticated.")
-    if not other_user:
-        raise ValueError("Other participant must be valid")
-
-    room_name = f"chat_{min(user.id, other_user.id)}_{max(user.id, other_user.id)}"
-    room = Room.objects(name=room_name).first()
-
-    if room:
-        return room
-
-    if getattr(user.role, "role", None) != "investor":
-        raise PermissionError("Only investors can initiate conversations")
-    if getattr(user.role, "role", None) == getattr(other_user.role, "role", None):
-        raise PermissionError("Conversation must be between investor and startup")
-
-    room = Room(
-        name=room_name,
-        participants=[
-            {
-                "id": str(user.id),
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-            },
-            {
-                "id": str(other_user.id),
-                "username": other_user.username,
-                "first_name": other_user.first_name,
-                "last_name": other_user.last_name,
-            },
-        ],
-    )
-    room.save()
-    return room
-
-@sync_to_async
-def save_message(room, sender, text):
-    """
-    Saves a message in MongoDB for the given room.
-    """
-    msg = Message(
-        room=room,
-        sender_id=str(sender.id),
-        sender_first_name=sender.first_name,
-        sender_last_name=sender.last_name,
-        text=text,
-        timestamp=timezone.now(),
-        is_read=False,
-    )
-    msg.save()
-    return {
-        "id": str(msg.id),
-        "sender_id": msg.sender_id,
-        "first_name": msg.sender_first_name,
-        "last_name": msg.sender_last_name,
-        "text": msg.text,
-        "timestamp": msg.timestamp.isoformat(),
-        "is_read": msg.is_read,
-    }
 
 
 @sync_to_async
@@ -148,12 +87,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         try:
-            self.room = await get_or_create_room(self.user, self.other_user)
-        except PermissionError as e:
+            room = await sync_to_async(get_or_create_room)(self.user, other_user_id=other_user_id)
+        except (PermissionError, ValidationError):
             await self.close()
             return
 
-        self.room_group_name = f"chat_{self.room.name}"
+        self.room = room
+        self.room_group_name = self.room.name
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
@@ -217,14 +157,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         try:
-            saved = await save_message(self.room, self.user, message)
+            saved_msg = await sync_to_async(save_message)(self.room, self.user, message)
+            serialized = MessageSerializer(saved_msg).data
         except Exception as e:
             await self.send(text_data=json.dumps({"error": f"Failed to save message: {str(e)}"}))
             return
 
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "chat_message", "message": saved},
+            {"type": "chat_message", "message": serialized},
         )
 
     async def chat_message(self, event):
