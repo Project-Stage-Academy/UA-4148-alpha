@@ -18,7 +18,6 @@ class TestUserRole:
     - Restricting creation of disallowed roles.
     """
 
-
     @pytest.fixture(autouse=True)
     def setup(self):
         self.client = APIClient()

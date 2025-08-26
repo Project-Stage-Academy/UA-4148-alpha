@@ -132,7 +132,7 @@ class UserViewSet(viewsets.ViewSet):
 
             # Generate a token and send a letter
             token = generate_activation_token(user)
-            send_activation_email(token, user.email, settings.FRONTEND_URL)
+            send_activation_email(token, user.email)
 
             # TODO: tokens
             return Response(
@@ -198,7 +198,7 @@ class UserViewSet(viewsets.ViewSet):
 
         # Generate a new activation token and send the email
         token = generate_activation_token(user)
-        send_activation_email(token, user.email, settings.FRONTEND_URL)
+        send_activation_email(token, user.email)
 
         return Response(
             {"detail": "If the email exists, an activation link has been sent."},
