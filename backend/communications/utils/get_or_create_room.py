@@ -36,7 +36,10 @@ def get_or_create_room(user, room_id=None, other_user_id=None):
     sender_role = getattr(user.role, "role", None)
     receiver_role = getattr(other_user.role, "role", None)
 
-    if sender_role not in {"investor", "startup"} or receiver_role not in {"investor", "startup"}:
+    if sender_role not in {"investor", "startup"} or receiver_role not in {
+        "investor",
+        "startup",
+    }:
         raise PermissionDenied("Messaging allowed only between investor and startup.")
     if sender_role == receiver_role:
         raise PermissionDenied("Messaging allowed only between investor and startup.")

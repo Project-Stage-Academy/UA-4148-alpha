@@ -16,7 +16,11 @@ def room(request, other_user_id):
     Render the chat room page.
     Pass both current user ID and the selected other user ID.
     """
-    return render(request, "chat/room.html", {
-        "other_user_id": other_user_id,
-        "current_user_id": request.user.id,
-    })
+    return render(
+        request,
+        "chat/room.html",
+        {
+            "other_user_id": other_user_id,
+            "current_user_id": request.user.id,
+        },
+    )
