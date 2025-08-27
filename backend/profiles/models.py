@@ -85,5 +85,10 @@ class InvestorProfile(models.Model):
         through='projects.SavedProject',
     )
 
+    saved_projects = models.ManyToManyField(
+        "projects.StartupProject",
+        through="projects.SavedProject",
+    )
+
     def __str__(self):
         return self.company_name

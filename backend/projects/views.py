@@ -2,32 +2,38 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.db.models import F
 
 from .serializers import ProjectSerializer
 from .models import StartupProject
 from profiles.models import InvestorProfile
 
 
-class ProjectViewSet(viewsets.ViewSet):
+class ProjectViewSet(viewsets.ModelViewSet):
     """ViewSet for listing, retrieving, and subscribing to projects."""
 
     permission_classes = [IsAuthenticated]
+    queryset = StartupProject.objects.all()
+    serializer_class = ProjectSerializer
 
-    mock_projects = [
-        {"id": 1, "name": "Test Project 1", "description": "Description of Project 1"},
-        {"id": 2, "name": "Test Project 2", "description": "Description of Project 2"},
-    ]
-
-    def list(self, request):
-        serializer = ProjectSerializer(self.mock_projects, many=True)
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().order_by("-created_at")
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, pk=None):
-        project = next((p for p in self.mock_projects if str(p["id"]) == str(pk)), None)
-        if project:
-            serializer = ProjectSerializer(project)
-            return Response(serializer.data)
-        return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+    def retrieve(self, request, *args, **kwargs):
+        project = self.get_object()
+
+        # View counter update
+        StartupProject.objects.filter(pk=project.pk).update(
+            views_count=F("views_count") + 1
+        )
+
+        # Updating the object (project) to give the serializer the current value
+        project.refresh_from_db(fields=["views_count"])
+
+        serializer = self.get_serializer(project)
+        return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
