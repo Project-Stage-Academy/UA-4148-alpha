@@ -34,19 +34,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(project)
         return Response(serializer.data)
-
-    @action(detail=True, methods=["post"])
-    def subscribe(self, request, pk=None):
-        return Response(
-            {"message": f"Subscribed to project {pk}"}, status=status.HTTP_201_CREATED
-        )
-
-class ProjectViewSet(viewsets.ModelViewSet):
-    """ ViewSet for listing, retrieving, and subscribing/following projects."""
-    
-    queryset = StartupProject.objects.all()
-    serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
     
     # action "follow" for saving projects
     @action(detail=True, methods=["post"], url_path="follow")
