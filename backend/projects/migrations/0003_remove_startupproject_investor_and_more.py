@@ -7,39 +7,69 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('profiles', '0001_initial'),
-        ('projects', '0002_projectstatus_savedstartup_startupproject_and_more'),
+        ("profiles", "0001_initial"),
+        ("projects", "0002_projectstatus_savedstartup_startupproject_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='startupproject',
-            name='investor',
+            model_name="startupproject",
+            name="investor",
         ),
         migrations.AlterField(
-            model_name='projectstatus',
-            name='status',
+            model_name="projectstatus",
+            name="status",
             field=models.CharField(max_length=150, unique=True),
         ),
         migrations.CreateModel(
-            name='SavedProject',
+            name="SavedProject",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('saved_at', models.DateTimeField(auto_now_add=True, help_text='Date and time the project was saved')),
-                ('investor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='investor_saved_projects', to='profiles.investorprofile')),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saved_by_investors', to='projects.startupproject')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "saved_at",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Date and time the project was saved",
+                    ),
+                ),
+                (
+                    "investor",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="investor_saved_projects",
+                        to="profiles.investorprofile",
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="saved_by_investors",
+                        to="projects.startupproject",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Saved project',
-                'verbose_name_plural': 'Saved projects',
-                'ordering': ['-saved_at'],
+                "verbose_name": "Saved project",
+                "verbose_name_plural": "Saved projects",
+                "ordering": ["-saved_at"],
             },
         ),
         migrations.DeleteModel(
-            name='SavedStartup',
+            name="SavedStartup",
         ),
         migrations.AddConstraint(
-            model_name='savedproject',
-            constraint=models.UniqueConstraint(fields=('investor', 'project'), name='uniq_investor_project'),
+            model_name="savedproject",
+            constraint=models.UniqueConstraint(
+                fields=("investor", "project"), name="uniq_investor_project"
+            ),
         ),
     ]

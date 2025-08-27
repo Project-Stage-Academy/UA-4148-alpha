@@ -28,7 +28,7 @@ class StartupProject(models.Model):
     views_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         FUNDED = "FUNDED", "Funded"
@@ -38,37 +38,37 @@ class StartupProject(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
     )
-    
+
     startup = models.ForeignKey(
         StartupProfile, on_delete=models.CASCADE, related_name="projects"
     )
 
     def __str__(self):
         return self.subject
-    
+
+
 class SavedProject(models.Model):
     """Intermediate table for represents a project saved by investor (many-to-many relation)."""
-    
+
     investor = models.ForeignKey(
         InvestorProfile,
         on_delete=models.CASCADE,
-        related_name="investor_saved_projects"
+        related_name="investor_saved_projects",
     )
-    
+
     project = models.ForeignKey(
-        StartupProject,
-        on_delete=models.CASCADE,
-        related_name="saved_by_investors"
+        StartupProject, on_delete=models.CASCADE, related_name="saved_by_investors"
     )
-    
+
     saved_at = models.DateTimeField(
-        auto_now_add = True,
-        help_text="Date and time the project was saved"
+        auto_now_add=True, help_text="Date and time the project was saved"
     )
-    
+
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["investor", "project"], name="uniq_investor_project") # protection against duplicates: one investor cannot save one startup twice
+            models.UniqueConstraint(
+                fields=["investor", "project"], name="uniq_investor_project"
+            )  # protection against duplicates: one investor cannot save one startup twice
         ]
         ordering = ["-saved_at"]
         verbose_name = "Saved project"

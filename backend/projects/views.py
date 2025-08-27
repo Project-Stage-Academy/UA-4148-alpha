@@ -22,15 +22,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         project = self.get_object()
-        
+
         # View counter update
         StartupProject.objects.filter(pk=project.pk).update(
-            views_count = F("views_count")+1
+            views_count=F("views_count") + 1
         )
-        
+
         # Updating the object (project) to give the serializer the current value
         project.refresh_from_db(fields=["views_count"])
-        
+
         serializer = self.get_serializer(project)
         return Response(serializer.data)
 

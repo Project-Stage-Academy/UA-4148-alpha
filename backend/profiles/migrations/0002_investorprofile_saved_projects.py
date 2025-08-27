@@ -6,14 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('profiles', '0001_initial'),
-        ('projects', '0003_remove_startupproject_investor_and_more'),
+        ("profiles", "0001_initial"),
+        ("projects", "0003_remove_startupproject_investor_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='investorprofile',
-            name='saved_projects',
-            field=models.ManyToManyField(through='projects.SavedProject', to='projects.startupproject'),
+            model_name="investorprofile",
+            name="saved_projects",
+            field=models.ManyToManyField(
+                through="projects.SavedProject", to="projects.startupproject"
+            ),
         ),
     ]
