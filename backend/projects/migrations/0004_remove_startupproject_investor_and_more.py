@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("profiles", "0001_initial"),
-        ("projects", "0002_projectstatus_savedstartup_startupproject_and_more"),
+        ("projects", "0003_alter_projectstatus_status"),
     ]
 
     operations = [
