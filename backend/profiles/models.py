@@ -80,5 +80,10 @@ class InvestorProfile(models.Model):
     company_name = models.CharField(max_length=150)
     website = models.URLField(blank=True)
 
+    saved_projects = models.ManyToManyField(
+        "projects.StartupProject",
+        through="projects.SavedProject",
+    )
+
     def __str__(self):
         return self.company_name
