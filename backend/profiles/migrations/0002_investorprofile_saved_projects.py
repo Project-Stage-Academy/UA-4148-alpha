@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("profiles", "0001_initial"),
-        ("projects", "0003_remove_startupproject_investor_and_more"),
+        ("projects", "0004_remove_startupproject_investor_and_more"),
     ]
 
     operations = [
