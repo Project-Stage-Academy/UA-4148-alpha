@@ -5,7 +5,18 @@ from django.db import models
 class Industry(models.Model):
     """Represents an industry sector that a startup can belong to."""
 
-    name = models.CharField(max_length=100)
+    INDUSTRY_CHOICES = [
+        ("category 1", "category 1"),
+        ("category 2", "category 2"),
+        ("category 3", "category 3"),
+        ("category 4", "category 4"),
+        ("category 5", "category 5"),
+        ("category 6", "category 6"),
+        ("category 7", "category 7"),
+        ("category 8", "category 8"),
+    ]
+
+    name = models.CharField(max_length=100, choices=INDUSTRY_CHOICES, unique=True)
 
     def __str__(self):
         return self.name
@@ -14,7 +25,18 @@ class Industry(models.Model):
 class Location(models.Model):
     """Represents a geographical location of a startup."""
 
-    name = models.CharField(max_length=100)
+    LOCATION_CHOICES = [
+        ("Autonomous Republic of Crimea", "Autonomous Republic of Crimea"),
+        ("Lviv Oblast", "Lviv Oblast"),
+        ("Ivano-Frankivsk Oblast", "Ivano-Frankivsk Oblast"),
+        ("Odesa Oblast", "Odesa Oblast"),
+        ("Rivne Oblast", "Rivne Oblast"),
+        ("Ternopil Oblast", "Ternopil Oblast"),
+        ("Sumy Oblast", "Sumy Oblast"),
+        ("Kyiv Oblast", "Kyiv Oblast"),
+    ]
+
+    name = models.CharField(max_length=100, choices=LOCATION_CHOICES, unique=True)
 
     def __str__(self):
         return self.name

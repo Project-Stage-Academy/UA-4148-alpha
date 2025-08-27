@@ -6,16 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("users", "0004_alter_userrole_role"),
+        ("projects", "0002_projectstatus_savedstartup_startupproject_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="userrole",
-            name="role",
+            model_name="projectstatus",
+            name="status",
             field=models.CharField(
-                choices=[("investor", "Investor"), ("startup", "Startup")],
-                max_length=15,
+                choices=[("Pending", "Pending"), ("Funded", "Funded")],
+                max_length=150,
                 unique=True,
             ),
         ),
