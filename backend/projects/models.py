@@ -1,7 +1,7 @@
 from django.db import models
 
 from profiles.models import InvestorProfile, StartupProfile
-
+from django.conf import settings
 
 class StartupProject(models.Model):
     """Represents a project created by a startup, including investment details."""
