@@ -12,15 +12,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='startupproject',
-            name='investor',
-        ),
-        migrations.AlterField(
-            model_name='projectstatus',
-            name='status',
-            field=models.CharField(max_length=150, unique=True),
-        ),
         migrations.CreateModel(
             name='SavedProject',
             fields=[
