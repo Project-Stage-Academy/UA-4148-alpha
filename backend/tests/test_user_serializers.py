@@ -17,6 +17,9 @@ from users.utils.verify_reset_token import verify_reset_token
 
 @pytest.mark.django_db
 def test_user_registration_serializer_valid_and_invalid():
+    
+    UserProfile.objects.filter(username="existinguser").delete()
+    
     UserProfile.objects.create_user(
         username="existinguser", email="existing@example.com", password="TestPass123!"
     )
