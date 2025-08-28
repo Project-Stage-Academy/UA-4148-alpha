@@ -6,28 +6,29 @@ from projects.models import StartupProject, ProjectRevision
 from profiles.models import StartupProfile
 from users.models import UserProfile, UserRole
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
+
 
 @pytest.fixture
 def investor_user(db):
     role, _ = UserRole.objects.get_or_create(role="investor")
     return UserProfile.objects.create_user(
-        email="investor@example.com",
-        username="investor",
-        password="pass123",
-        role=role
+        email="investor@example.com", username="investor", password="pass123", role=role
     )
+
 
 @pytest.fixture
 def startup_project(db, investor_user):
-    startup = StartupProfile.objects.create(user=investor_user, company_name="Test Startup")
-    return StartupProject.objects.create(
-        subject="Old Project",
-        idea="Old Idea",
-        startup=startup
+    startup = StartupProfile.objects.create(
+        user=investor_user, company_name="Test Startup"
     )
+    return StartupProject.objects.create(
+        subject="Old Project", idea="Old Idea", startup=startup
+    )
+
 
 @pytest.mark.django_db
 def test_update_project_creates_revision(api_client, startup_project, investor_user):
@@ -38,7 +39,7 @@ def test_update_project_creates_revision(api_client, startup_project, investor_u
 
     with patch("projects.views.get_channel_layer") as mock_layer:
         mock_channel = mock_layer.return_value
-        mock_channel.group_send = AsyncMock()  
+        mock_channel.group_send = AsyncMock()
 
         response = api_client.post(url, data)
 

@@ -37,7 +37,9 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def validate_subject(self, value):
         if len(value.strip()) < 3:
-            raise serializers.ValidationError("Subject must be at least 3 characters long.")
+            raise serializers.ValidationError(
+                "Subject must be at least 3 characters long."
+            )
         return value
 
     def validate_idea(self, value):
