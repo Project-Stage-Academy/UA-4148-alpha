@@ -29,7 +29,7 @@ from users.utils.email_activation import (
 from users.utils.email_utils import send_activation_email
 
 from .models import UserProfile, UserRole
-from .permissions import InvestorRolePermission
+from .permissions import InvestorRolePermission, StartupRolePermission
 from .utils import generate_password_reset_token
 
 
@@ -50,6 +50,8 @@ class UserViewSet(viewsets.ViewSet):
         Public access allowed for registration and password reset.
         """
         if self.action == "me":
+            return [IsAuthenticated()]
+        if self.action == "by-role":
             return [IsAuthenticated(), InvestorRolePermission()]
         if self.action in [
             "create_role",
@@ -74,6 +76,24 @@ class UserViewSet(viewsets.ViewSet):
 
         serializer = UserSerializer(user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="by-role")
+    def by_role(self, request):
+        """
+        Returns users filtered by role.
+        """
+        role = request.query_params.get("role")
+        if not role:
+            return Response(
+                {"detail": "Role is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        if role not in ("investor", "startup"):
+            return Response(
+                {"detail": "Invalid role value."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        users = UserProfile.objects.filter(role__role=role)
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
     # TODO: only admins can create roles. remove create_role from get_permissions once implemented
     @action(detail=False, methods=["post"], url_path="create-role")
@@ -132,7 +152,7 @@ class UserViewSet(viewsets.ViewSet):
 
             # Generate a token and send a letter
             token = generate_activation_token(user)
-            send_activation_email(token, user.email, settings.FRONTEND_URL)
+            send_activation_email(token, user.email)
 
             # TODO: tokens
             return Response(
@@ -198,7 +218,7 @@ class UserViewSet(viewsets.ViewSet):
 
         # Generate a new activation token and send the email
         token = generate_activation_token(user)
-        send_activation_email(token, user.email, settings.FRONTEND_URL)
+        send_activation_email(token, user.email)
 
         return Response(
             {"detail": "If the email exists, an activation link has been sent."},

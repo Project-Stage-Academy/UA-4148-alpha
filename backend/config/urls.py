@@ -33,6 +33,7 @@ token_urlpatterns = [
 api_urlpatterns = [
     path("token/", include(token_urlpatterns)),
     path("", include("users.urls")),
+    path("chat/", include("communications.api_urls")),
 ]
 
 urlpatterns = [
