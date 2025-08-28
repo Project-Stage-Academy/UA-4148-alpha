@@ -70,6 +70,3 @@ class UserProfile(AbstractUser):
 
     def __str__(self):
         return self.email
-    
-    def is_investor(self):
-        return self.role and self.role.role == "investor"
