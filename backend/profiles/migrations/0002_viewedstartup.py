@@ -8,22 +8,49 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('profiles', '0001_initial'),
+        ("profiles", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ViewedStartup',
+            name="ViewedStartup",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('viewed_at', models.DateTimeField(auto_now_add=True)),
-                ('startup', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='views', to='profiles.startupprofile')),
-                ('user', models.ForeignKey(limit_choices_to={'role__role': 'investor'}, on_delete=django.db.models.deletion.CASCADE, related_name='viewed_startups', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("viewed_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "startup",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="views",
+                        to="profiles.startupprofile",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        limit_choices_to={"role__role": "investor"},
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="viewed_startups",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-viewed_at'],
-                'constraints': [models.UniqueConstraint(fields=('user', 'startup'), name='unique_investor_startup_view')],
+                "ordering": ["-viewed_at"],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("user", "startup"), name="unique_investor_startup_view"
+                    )
+                ],
             },
         ),
     ]

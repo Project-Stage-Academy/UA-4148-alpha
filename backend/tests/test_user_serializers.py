@@ -20,7 +20,9 @@ def test_user_registration_serializer_valid_and_invalid():
     UserProfile.objects.create_user(
         username="existinguser", email="existing@example.com", password="TestPass123!"
     )
-    UserProfile.objects.create_user(username="existinguser", email="existing@example.com", password="TestPass123!")
+    UserProfile.objects.create_user(
+        username="existinguser", email="existing@example.com", password="TestPass123!"
+    )
 
     valid_data = {
         "username": "newuser",

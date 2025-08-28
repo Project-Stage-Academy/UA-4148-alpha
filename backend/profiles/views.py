@@ -9,19 +9,21 @@ from django.utils import timezone
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.pagination import LimitOffsetPagination
 
+
 class ViewedStartupPagination(LimitOffsetPagination):
-    default_limit = 10   
+    default_limit = 10
     max_limit = 50
+
 
 class ViewedStartupListView(generics.ListAPIView):
     serializer_class = ViewedStartupSerializer
     permission_classes = [IsInvestor]
     pagination_class = ViewedStartupPagination
-    
+
     def get_queryset(self):
-        return ViewedStartup.objects.filter(
-            user=self.request.user
-        ).order_by("-viewed_at")
+        return ViewedStartup.objects.filter(user=self.request.user).order_by(
+            "-viewed_at"
+        )
 
 
 class ViewedStartupCreateView(APIView):

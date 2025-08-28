@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models import ViewedStartup, StartupProfile
 
 
-
 class StartupProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StartupProfile
@@ -15,7 +14,8 @@ class StartupProfileSerializer(serializers.ModelSerializer):
             "industry",
             "location",
         ]
-        
+
+
 class ViewedStartupSerializer(serializers.ModelSerializer):
     startup_id = serializers.IntegerField(source="startup.id", read_only=True)
     company_name = serializers.CharField(source="startup.company_name", read_only=True)

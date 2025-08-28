@@ -2,9 +2,11 @@ import pytest
 from rest_framework.test import APIClient
 from profiles.models import ViewedStartup
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
+
 
 @pytest.fixture(autouse=True)
 def clear_viewed_startups():
@@ -58,7 +60,9 @@ def test_clear_viewed_startups(api_client, create_investor, create_startup):
 
 
 @pytest.mark.django_db
-def test_permissions_only_investors(api_client, create_startup, create_investor, startup_role):
+def test_permissions_only_investors(
+    api_client, create_startup, create_investor, startup_role
+):
     user = create_investor(email="startup@test.com", username="startup_user")
     user.role = startup_role
     user.save()

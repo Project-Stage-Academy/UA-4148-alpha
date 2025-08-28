@@ -1,5 +1,7 @@
 from rest_framework.permissions import BasePermission
 from users.models import UserProfile
+
+
 class InvestorRolePermission(BasePermission):
     """
     Custom permission to allow access only to users with the 'investor' role.
