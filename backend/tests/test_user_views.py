@@ -15,6 +15,8 @@ def test_register_success():
         "email": "test@example.com",
         "password": "ComplexPass123!",
         "confirm_password": "ComplexPass123!",
+        "company_name": "Test",
+        "representative_type": "investor",
         "first_name": "Test",
         "last_name": "User",
         "role": "",

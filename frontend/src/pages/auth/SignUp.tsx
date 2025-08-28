@@ -43,6 +43,7 @@ const signUpSchema = z
     role: z.enum(Role, {
       error: "Виберіть кого ви представляєте",
     }),
+    company_name: z.string().nonempty("Введiть назву компанiї.").trim(),
   })
   .superRefine(({ confirm_password, password }, ctx) => {
     if (confirm_password !== password) {
@@ -75,6 +76,7 @@ export function SignUp() {
       last_name: "",
       username: "",
       role: undefined,
+      company_name: "",
     },
   });
 
