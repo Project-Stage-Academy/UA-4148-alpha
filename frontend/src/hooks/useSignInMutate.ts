@@ -24,6 +24,12 @@ export function useSignInMutate() {
         toast.error("Серверна помилка, спробуйте пізніше");
         return;
       }
+      if (error.code === "ERR_NETWORK") {
+        toast.error(
+          "Помилка пiдключення."
+        );
+        return;
+      }
       if (error.response?.data.detail == "Invalid credentials") {
         toast.error(
           "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."

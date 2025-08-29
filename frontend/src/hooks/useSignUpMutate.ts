@@ -6,11 +6,7 @@ import { toast } from "sonner";
 
 export function useSignUpMutate() {
   const navigate = useNavigate();
-  return useMutation<
-    SignUpResponse,
-    AxiosError,
-    SignUpData
-  >({
+  return useMutation<SignUpResponse, AxiosError, SignUpData>({
     mutationFn: signUp,
     onSuccess: () => {
       navigate("/signin");
@@ -19,10 +15,16 @@ export function useSignUpMutate() {
       console.log(error);
       if (error.status && error.status >= 500) {
         toast.error("Серверна помилка, спробуйте пізніше");
-        return
+        return;
       }
       if (error.response?.data) {
-        throw error.response?.data
+        throw error.response?.data;
+      }
+      if (error.code === "ERR_NETWORK") {
+        toast.error(
+          "Помилка пiдключення."
+        );
+        return;
       }
       toast.error(
         "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."
