@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/libs/utils";
 import { useState } from "react";
-import { Enterprises } from "./Enterprises";
-import { Companies } from "./Companies";
+import { Enterprises } from "../components/composed_ui/Enterprises";
+import { Companies } from "../components/composed_ui/Companies";
 import { Startups } from "./Startups";
 
 const NAVIGATION_TAB_STYLE = cn(
@@ -10,7 +10,7 @@ const NAVIGATION_TAB_STYLE = cn(
 );
 
 export function EnterprisesAndIndustries() {
-  const [tab, setActiveTab] = useState<"all" | "companies" | "startups">("all");
+  const [tab, setActiveTab] = useState<"all" | "companies" | "startups">("startups");
 
   return (
     <div className="flex flex-col h-full">
@@ -65,7 +65,9 @@ function TabButton({ onClick, isActive, title }: TabButtonProps) {
       <div className="flex flex-col gap-2.5">
         {title}
         <div className="relative h-[2px] w-full">
-          {isActive && <div className=" w-full h-full bg-black absolute bottom-0" />}
+          {isActive && (
+            <div className=" w-full h-full bg-black absolute bottom-0" />
+          )}
         </div>
       </div>
     </Button>
