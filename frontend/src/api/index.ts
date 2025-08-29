@@ -8,8 +8,21 @@ const axiosInstance = axios.create({
   },
 });
 
+const refreshToken = async () => {
+  const token = localStorage.getItem("refresh");
+  if (!token) throw new Error("No refresh token available");
 
-axiosInstance.interceptors.request.use((config) => {
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_BASE_URL}/api/refresh`,
+    {
+      refresh: token,
+    }
+  );
+  return response.data;
+};
+
+axiosInstance.interceptors.request.use(
+  (config) => {
     const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -18,6 +31,43 @@ axiosInstance.interceptors.request.use((config) => {
   },
   (error) => {
     return Promise.reject(error);
-  })
+  }
+);
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
+      try {
+        const data = await refreshToken();
+
+        localStorage.setItem("accessToken", data.access);
+        if (data.refresh) localStorage.setItem("refresh", data.refresh);
+
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${data.access}`;
+        originalRequest.headers["Authorization"] = `Bearer ${data.access}`;
+
+        return axiosInstance(originalRequest); // retry original request
+      } catch (err) {
+        console.error("Refresh token failed", err);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refresh");
+        // optionally redirect to login page
+        return Promise.reject(err);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default axiosInstance;
