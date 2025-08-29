@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSignInMutate } from "@/hooks/useSignInMutate";
 import { useAuthContext } from "@/hooks/useAuthContext";
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 
 const signInSchema = z.object({
   email: z
@@ -62,9 +63,8 @@ export function SignIn() {
         </Form>
         <div className="font-display text-sm">
           <span>Вперше на нашому сайті?</span>{" "}
-          {/* TODO: Link tag with to attribute and signup value */}
-          <Button variant={'tertiary'} className="underline font-semibold">
-            Зареєструйтесь
+          <Button variant={'tertiary'} className="underline font-semibold underline-offset-4">
+            <Link to="/signup" className="text-sm">Зареєструйтесь</Link>
           </Button>
         </div>
       </div>
