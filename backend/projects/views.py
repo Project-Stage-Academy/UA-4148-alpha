@@ -7,6 +7,10 @@ from django.db.models import F
 from .serializers import ProjectSerializer
 from .models import StartupProject
 
+from .models import StartupProject, ProjectRevision
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """ViewSet for listing, retrieving, and subscribing to projects."""
@@ -39,3 +43,43 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(
             {"message": f"Subscribed to project {pk}"}, status=status.HTTP_201_CREATED
         )
+
+    @action(detail=True, methods=["post"])
+    def update_project(self, request, pk=None):
+        try:
+            project = StartupProject.objects.get(pk=pk, startup__user=request.user)
+        except StartupProject.DoesNotExist:
+            return Response(
+                {"detail": "Project not found or access denied."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = ProjectSerializer(project, data=request.data, partial=True)
+        if serializer.is_valid():
+            old_data = ProjectSerializer(project).data
+            serializer.save()
+            new_data = serializer.data
+
+            changes = {
+                field: {"old": old_data[field], "new": new_data[field]}
+                for field in new_data
+                if old_data[field] != new_data[field]
+            }
+
+            if changes:
+                ProjectRevision.objects.create(
+                    project=project, updated_by=request.user, changes=changes
+                )
+
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"startup_{project.startup.id}",
+                {"type": "project.update", "project": new_data},
+            )
+
+            return Response(
+                {"message": "Project updated successfully", "project": new_data},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
