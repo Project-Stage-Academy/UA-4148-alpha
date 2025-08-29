@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.conf import settings
 from profiles.models import InvestorProfile, StartupProfile
 
 
@@ -62,3 +62,17 @@ class SavedProject(models.Model):
 
     def __str__(self):
         return f"{self.investor.company_name} saved project {self.project.subject} from {self.project.startup.company_name}"
+
+
+class ProjectRevision(models.Model):
+    project = models.ForeignKey(
+        StartupProject, on_delete=models.CASCADE, related_name="revisions"
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+    changes = models.JSONField()
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Revision of {self.project.subject} at {self.updated_at}"
