@@ -2,8 +2,10 @@ import { useMutation } from "@tanstack/react-query";
 import { signIn, type SignInData, type SignInResponse } from "../api/auth";
 import { useAuthContext } from "./useAuthContext";
 import type { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
 export function useSignInMutate() {
+  const navigate = useNavigate()
   const auth = useAuthContext();
   return useMutation<
     SignInResponse,
@@ -13,7 +15,7 @@ export function useSignInMutate() {
     mutationFn: signIn,
     onSuccess: (data) => {
       auth?.login(data);
-      // TODO: Navigate to dashboard when implemented
+      navigate('/enterprises-and-industries')
     },
     onError: (error) => {
       console.error(error);
