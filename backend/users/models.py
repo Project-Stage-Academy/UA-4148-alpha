@@ -52,6 +52,12 @@ class UserProfile(AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]
 
+    def is_investor(self):
+        return self.role and self.role.role == "investor"
+
+    def is_startup(self):
+        return self.role and self.role.role == "startup"
+
     class Meta:
         """Meta options for UserProfile model."""
 
