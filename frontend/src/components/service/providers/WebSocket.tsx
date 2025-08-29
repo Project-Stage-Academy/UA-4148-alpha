@@ -12,21 +12,21 @@ const WebSocketContext = createContext<RefObject<WebSocket | null>>({
 });
 
 export const WebSocketProvider = ({ children }: PropsWithChildren) => {
-  const { accessToken } = useAuthContext();
+  const { user, accessToken } = useAuthContext();
   const socketRef = useRef<null | WebSocket>(null);
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!accessToken || !user) return;
 
-    // TODO: remove user_id -> 1
-    const ws = new WebSocket(import.meta.env.VITE_NOTIFICATION_SERVICE + "/1");
+    // TODO: remove user_id and provide JWT
+    const ws = new WebSocket(`${import.meta.env.VITE_NOTIFICATION_SERVICE}/${user?.id}`);
     socketRef.current = ws;
 
     socketRef.current.onopen = () => console.log("Connected");
     socketRef.current.onclose = () => console.log("Disconnected");
 
     return () => socketRef.current?.close();
-  }, [accessToken]);
+  }, [accessToken, user]);
 
   useEffect(() => {
     if (!socketRef.current) return;
