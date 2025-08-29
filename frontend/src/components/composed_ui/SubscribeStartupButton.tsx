@@ -1,15 +1,17 @@
 import { Heart } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuthContext } from "@/hooks/useAuthContext";
+import { useSubscribeStartup } from "@/hooks/useSubscribeStartup";
 
 interface SubscribeStartupButtonProps {
   id: number;
 }
 
 const SubscribeStartupButton = ({ id }: SubscribeStartupButtonProps) => {
+  const mutate = useSubscribeStartup();
   const { user } = useAuthContext();
-  const handleSubscribe = () => {
-    alert("Subscribed to sturtup: " + id);
+  const handleSubscribe = async () => {
+    mutate.mutateAsync({ startupId: id });
   };
 
   if (user?.role != "investor") {
@@ -19,7 +21,7 @@ const SubscribeStartupButton = ({ id }: SubscribeStartupButtonProps) => {
   // TODO: check if investor subscribed for this startup
   const subscribed = true;
   return (
-    <Button variant={"tertiary"} onClick={handleSubscribe}>
+    <Button disabled={mutate.isPending} variant={"tertiary"} onClick={handleSubscribe}>
       {subscribed ? <Heart className="fill-black" /> : <Heart />}
     </Button>
   );

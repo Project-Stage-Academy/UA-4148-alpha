@@ -8,7 +8,7 @@ export function Startups() {
 
   useEffect(() => {
     if (isError) {
-      toast.error(error?.response?.data?.detail || "Something went wrong");
+      toast.error(error?.response?.data?.detail || "Щось пішло не так, спробуйте ще раз");
     }
   }, [isError, error]);
 
