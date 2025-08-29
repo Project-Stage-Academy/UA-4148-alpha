@@ -25,7 +25,7 @@ export function StartupCard({ startup }: StartupCardProps) {
         <p>{startup.startup_name}</p>
         <SubscribeStartupButton id={startup.id} />
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 h-full">
         <h4 className="text-secondary-black font-bold text-xl font-display">
           {startup.subject}
         </h4>
