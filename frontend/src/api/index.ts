@@ -56,12 +56,9 @@ axiosInstance.interceptors.response.use(
         ] = `Bearer ${data.access}`;
         originalRequest.headers["Authorization"] = `Bearer ${data.access}`;
 
-        return axiosInstance(originalRequest); // retry original request
+        return axiosInstance(originalRequest);
       } catch (err) {
         console.error("Refresh token failed", err);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refresh");
-        // optionally redirect to login page
         return Promise.reject(err);
       }
     }

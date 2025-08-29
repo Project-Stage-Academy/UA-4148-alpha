@@ -18,7 +18,7 @@ export function Startups() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
       {data.map((startup) => (
-        <StartupCard startup={startup} />
+        <StartupCard key={startup.id} startup={startup} />
       ))}
     </div>
   );
