@@ -7,25 +7,49 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Investor',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('email', models.EmailField(blank=True, max_length=254, null=True)),
-            ],
+migrations.CreateModel(
+    name="Investor",
+    fields=[
+        (
+            "id",
+            models.BigAutoField(
+                auto_created=True,
+                primary_key=True,
+                serialize=False,
+                verbose_name="ID",
+            ),
         ),
-        migrations.CreateModel(
-            name='Project',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('budget', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
+        ("name", models.CharField(max_length=255)),
+        ("email", models.EmailField(blank=True, max_length=254, null=True)),
+    ],
+),
+migrations.CreateModel(
+    name="Project",
+    fields=[
+        (
+            "id",
+            models.BigAutoField(
+                auto_created=True,
+                primary_key=True,
+                serialize=False,
+                verbose_name="ID",
+            ),
+        ),
+        ("name", models.CharField(max_length=255)),
+        ("description", models.TextField(blank=True)),
+        (
+            "budget",
+            models.DecimalField(
+                decimal_places=2, default=Decimal("0.00"), max_digits=12
+            ),
+        ),
+    ],
+),
+
             ],
         ),
         migrations.CreateModel(
