@@ -3,15 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import F
-from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 from .serializers import ProjectSerializer, SubscriptionSerializer
 from .models import StartupProject, Subscription, ProjectRevision
 from .permissions import IsInvestor
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -37,15 +34,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(project)
         return Response(serializer.data)
-
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["post"])
-    def subscribe(self, request, pk=None):
-from rest_framework.decorators import action
-
-class ProjectViewSet(viewsets.ModelViewSet):
-    # ... інший код ...
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
@@ -118,8 +106,5 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 {"message": "Project updated successfully", "project": new_data},
                 status=status.HTTP_200_OK,
             )
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
