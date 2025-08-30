@@ -56,15 +56,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
             if project.remaining_funding() < share:
                 return Response(
-                    {"error": "Funding goal exceeded"}, status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Funding goal exceeded"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             subscription = serializer.save(
-                investor=request.user.investorprofile,
-                project=project
+                investor=request.user.investorprofile, project=project
             )
             return Response(
-                SubscriptionSerializer(subscription).data, status=status.HTTP_201_CREATED
+                SubscriptionSerializer(subscription).data,
+                status=status.HTTP_201_CREATED,
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
