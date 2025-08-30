@@ -64,4 +64,3 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             )
 
         return data
-

@@ -7,76 +7,149 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('profiles', '0001_initial'),
-        ('projects', '0001_initial'),
+        ("profiles", "0001_initial"),
+        ("projects", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ProjectStatus',
+            name="ProjectStatus",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(max_length=150)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("status", models.CharField(max_length=150)),
             ],
         ),
         migrations.AlterField(
-            model_name='subscription',
-            name='investor',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='profiles.investorprofile'),
+            model_name="subscription",
+            name="investor",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subscriptions",
+                to="profiles.investorprofile",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='subscription',
+            name="subscription",
             unique_together=set(),
         ),
         migrations.AlterField(
-            model_name='subscription',
-            name='share',
+            model_name="subscription",
+            name="share",
             field=models.DecimalField(decimal_places=2, max_digits=12),
         ),
         migrations.CreateModel(
-            name='SavedStartup',
+            name="SavedStartup",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('saved_at', models.DateTimeField(auto_now_add=True)),
-                ('investor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiles.investorprofile')),
-                ('startup', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='profiles.startupprofile')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("saved_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "investor",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="profiles.investorprofile",
+                    ),
+                ),
+                (
+                    "startup",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="profiles.startupprofile",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='StartupProject',
+            name="StartupProject",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('subject', models.CharField(max_length=150)),
-                ('idea', models.TextField()),
-                ('description', models.TextField(blank=True)),
-                ('website', models.URLField(blank=True)),
-                ('investment_needed', models.BooleanField(default=True)),
-                ('views_count', models.IntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('funding_goal', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
-                ('investor', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='investments', to='profiles.investorprofile')),
-                ('startup', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='projects', to='profiles.startupprofile')),
-                ('status', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='project_statuses', to='projects.projectstatus')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("subject", models.CharField(max_length=150)),
+                ("idea", models.TextField()),
+                ("description", models.TextField(blank=True)),
+                ("website", models.URLField(blank=True)),
+                ("investment_needed", models.BooleanField(default=True)),
+                ("views_count", models.IntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "funding_goal",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=12, null=True
+                    ),
+                ),
+                (
+                    "investor",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="investments",
+                        to="profiles.investorprofile",
+                    ),
+                ),
+                (
+                    "startup",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="projects",
+                        to="profiles.startupprofile",
+                    ),
+                ),
+                (
+                    "status",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="project_statuses",
+                        to="projects.projectstatus",
+                    ),
+                ),
             ],
         ),
         migrations.AlterField(
-            model_name='subscription',
-            name='project',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='projects.startupproject'),
+            model_name="subscription",
+            name="project",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="subscriptions",
+                to="projects.startupproject",
+            ),
         ),
         migrations.DeleteModel(
-            name='Investor',
+            name="Investor",
         ),
         migrations.RemoveField(
-            model_name='subscription',
-            name='investment_amount',
+            model_name="subscription",
+            name="investment_amount",
         ),
         migrations.RemoveField(
-            model_name='subscription',
-            name='updated_at',
+            model_name="subscription",
+            name="updated_at",
         ),
         migrations.DeleteModel(
-            name='Project',
+            name="Project",
         ),
     ]

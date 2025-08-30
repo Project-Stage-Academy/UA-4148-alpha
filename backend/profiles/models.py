@@ -113,4 +113,6 @@ class ViewedStartup(models.Model):
         ordering = ["-viewed_at"]
 
     def __str__(self):
-        return f"{self.user.email} viewed {self.startup.company_name} on {self.viewed_at}"
+        return (
+            f"{self.user.email} viewed {self.startup.company_name} on {self.viewed_at}"
+        )

@@ -7,6 +7,5 @@ router = DefaultRouter()
 router.register(r"", ProjectViewSet, basename="project")
 
 urlpatterns = [
-path("", include(router.urls)),
-
+    path("", include(router.urls)),
 ]

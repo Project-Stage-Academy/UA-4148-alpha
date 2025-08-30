@@ -45,28 +45,28 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="InvestorProfile",
             fields=[
-(
-    "id",
-    models.BigAutoField(
-        auto_created=True,
-        primary_key=True,
-        serialize=False,
-        verbose_name="ID",
-    ),
-),
-(
-    "company_name",
-    models.CharField(max_length=150, blank=True),
-),
-("website", models.URLField(blank=True)),
-(
-    "user",
-    models.ForeignKey(
-        on_delete=django.db.models.deletion.CASCADE,
-        related_name="investors",
-        to=settings.AUTH_USER_MODEL,
-    ),
-),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "company_name",
+                    models.CharField(max_length=150, blank=True),
+                ),
+                ("website", models.URLField(blank=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="investors",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
