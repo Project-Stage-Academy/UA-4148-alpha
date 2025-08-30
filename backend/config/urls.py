@@ -39,7 +39,6 @@ api_urlpatterns = [
 ]
 
 urlpatterns = [
-urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("projects.urls")),
     path("api/", include(api_urlpatterns)),
