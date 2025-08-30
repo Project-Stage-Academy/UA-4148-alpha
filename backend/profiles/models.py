@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class Industry(models.Model):
     """Represents an industry sector that a startup can belong to."""
 
@@ -74,12 +75,12 @@ class StartupProfile(models.Model):
 
 
 class InvestorProfile(models.Model):
-"""Profile for an investor, including company info and website."""
+    """Profile for an investor, including company info and website."""
 
-user = models.ForeignKey(
-    settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investors"
-)
-company_name = models.CharField(max_length=150, blank=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investors"
+    )
+    company_name = models.CharField(max_length=150, blank=True)
     website = models.URLField(blank=True)
 
     saved_projects = models.ManyToManyField(
@@ -88,8 +89,7 @@ company_name = models.CharField(max_length=150, blank=True)
     )
 
     def __str__(self):
-def __str__(self):
-    return self.company_name or self.user.username
+        return self.company_name or self.user.username
 
 
 class ViewedStartup(models.Model):
@@ -113,7 +113,4 @@ class ViewedStartup(models.Model):
         ordering = ["-viewed_at"]
 
     def __str__(self):
-        return (
-            f"{self.user.email} viewed {self.startup.company_name} on {self.viewed_at}"
-        )
-
+        return f"{self.user.email} viewed {self.startup.company_name} on {self.viewed_at}"
