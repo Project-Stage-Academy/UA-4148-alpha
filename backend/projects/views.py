@@ -92,7 +92,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="unsave")
     def unsave(self, request, pk=None):
         """Allow an authenticated investor to unfollow (remove) a startup project."""
-        investor_profile = request.user.investorprofile
+        
+        investor_profile = getattr(request.user, "investorprofile", None)
+        if not investor_profile:
+            return Response(
+                {"error": "Investor profile not found for this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         project = self.get_object()
         
         # Atomic transaction to ensure database integrity
