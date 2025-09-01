@@ -34,11 +34,13 @@ api_urlpatterns = [
     path("token/", include(token_urlpatterns)),
     path("", include("users.urls")),
     path("chat/", include("communications.api_urls")),
+    path("projects/", include("projects.urls")),
+    path("profiles/", include("profiles.urls")),
 ]
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/projects/", include("projects.urls")),
+    path("", include("projects.urls")),
     path("api/", include(api_urlpatterns)),
     path(
         "swagger<format>/", SchemaView.without_ui(cache_timeout=0), name="schema-json"
