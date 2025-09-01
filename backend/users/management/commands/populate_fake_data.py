@@ -128,9 +128,17 @@ class Command(BaseCommand):
 
         # Validate subscriptions count
         if num_subscriptions is not None:
-            max_possible_projects = num_projects if num_projects is not None else num_startups if num_startups is not None else num_users // 2
-            max_subscriptions_per_project = 5  # Each project can have up to 5 subscriptions
-            max_possible_subscriptions = max_possible_projects * max_subscriptions_per_project
+            max_possible_projects = (
+                num_projects
+                if num_projects is not None
+                else num_startups if num_startups is not None else num_users // 2
+            )
+            max_subscriptions_per_project = (
+                5  # Each project can have up to 5 subscriptions
+            )
+            max_possible_subscriptions = (
+                max_possible_projects * max_subscriptions_per_project
+            )
             if num_subscriptions > max_possible_subscriptions:
                 errors.append(
                     f"Cannot create {num_subscriptions} subscriptions with only {max_possible_projects} projects "
@@ -152,22 +160,46 @@ class Command(BaseCommand):
                 errors.append("Cannot create startups without creating users first")
             if "projects" in selected_models and "startups" not in selected_models:
                 errors.append("Cannot create projects without creating startups first")
-            if "saved-projects" in selected_models and "projects" not in selected_models:
-                errors.append("Cannot create saved projects without creating projects first")
-            if "saved-projects" in selected_models and "investors" not in selected_models:
-                errors.append("Cannot create saved projects without creating investors first")
+            if (
+                "saved-projects" in selected_models
+                and "projects" not in selected_models
+            ):
+                errors.append(
+                    "Cannot create saved projects without creating projects first"
+                )
+            if (
+                "saved-projects" in selected_models
+                and "investors" not in selected_models
+            ):
+                errors.append(
+                    "Cannot create saved projects without creating investors first"
+                )
             if "subscriptions" in selected_models and "projects" not in selected_models:
-                errors.append("Cannot create subscriptions without creating projects first")
-            if "subscriptions" in selected_models and "investors" not in selected_models:
-                errors.append("Cannot create subscriptions without creating investors first")
+                errors.append(
+                    "Cannot create subscriptions without creating projects first"
+                )
+            if (
+                "subscriptions" in selected_models
+                and "investors" not in selected_models
+            ):
+                errors.append(
+                    "Cannot create subscriptions without creating investors first"
+                )
             if "revisions" in selected_models and "projects" not in selected_models:
                 errors.append("Cannot create revisions without creating projects first")
             if "revisions" in selected_models and "users" not in selected_models:
                 errors.append("Cannot create revisions without creating users first")
-            if "chat-messages" in selected_models and "chat-rooms" not in selected_models:
-                errors.append("Cannot create chat messages without creating chat rooms first")
+            if (
+                "chat-messages" in selected_models
+                and "chat-rooms" not in selected_models
+            ):
+                errors.append(
+                    "Cannot create chat messages without creating chat rooms first"
+                )
             if "chat-messages" in selected_models and "users" not in selected_models:
-                errors.append("Cannot create chat messages without creating users first")
+                errors.append(
+                    "Cannot create chat messages without creating users first"
+                )
 
         if errors:
             self.stdout.write(self.style.ERROR("Parameter validation errors:"))
@@ -201,9 +233,7 @@ class Command(BaseCommand):
                     f"Warning: Could not clear all existing data: {str(e)}"
                 )
             )
-            self.stdout.write(
-                self.style.WARNING("Continuing with existing data...")
-            )
+            self.stdout.write(self.style.WARNING("Continuing with existing data..."))
 
     def setup_roles(self):
         """Create or get existing user roles."""
@@ -296,11 +326,11 @@ class Command(BaseCommand):
         """Create investor profiles for the given users."""
         if not investor_users:
             return []
-        
+
         self.stdout.write(f"Creating {len(investor_users)} investor profiles...")
         fake = Faker()
         investor_profiles = []
-        
+
         for user in investor_users:
             try:
                 profile = InvestorProfile.objects.create(
@@ -315,18 +345,18 @@ class Command(BaseCommand):
                         f"Error creating investor profile for {user.email}: {str(e)}"
                     )
                 )
-        
+
         return investor_profiles
 
     def create_startup_profiles(self, startup_users):
         """Create startup profiles for the given users."""
         if not startup_users:
             return []
-        
+
         self.stdout.write(f"Creating {len(startup_users)} startup profiles...")
         fake = Faker()
         startup_profiles = []
-        
+
         for user in startup_users:
             try:
                 profile = StartupProfile.objects.create(
@@ -345,14 +375,14 @@ class Command(BaseCommand):
                         f"Error creating startup profile for {user.email}: {str(e)}"
                     )
                 )
-        
+
         return startup_profiles
 
     def create_projects(self, startup_profiles, num_projects):
         """Create startup projects distributed among startups."""
         if not startup_profiles:
             return 0
-        
+
         if num_projects:
             self.stdout.write(f"Creating {num_projects} startup projects...")
         else:
@@ -380,10 +410,24 @@ class Command(BaseCommand):
                         website=fake.url(),
                         investment_needed=random.choice([True, False]),
                         views_count=random.randint(0, 10000),
-                        status=random.choice([StartupProject.Status.PENDING, StartupProject.Status.FUNDED]),
+                        status=random.choice(
+                            [
+                                StartupProject.Status.PENDING,
+                                StartupProject.Status.FUNDED,
+                            ]
+                        ),
                         startup=startup,
-                        investor=random.choice(InvestorProfile.objects.all()) if InvestorProfile.objects.exists() and random.random() < 0.5 else None,
-                        funding_goal=random.randint(10000, 1000000) if random.random() < 0.7 else None,
+                        investor=(
+                            random.choice(InvestorProfile.objects.all())
+                            if InvestorProfile.objects.exists()
+                            and random.random() < 0.5
+                            else None
+                        ),
+                        funding_goal=(
+                            random.randint(10000, 1000000)
+                            if random.random() < 0.7
+                            else None
+                        ),
                     )
                     projects_created += 1
                 except Exception as e:
@@ -400,7 +444,7 @@ class Command(BaseCommand):
         """Create saved project relationships."""
         if not investor_profiles:
             return 0
-        
+
         if num_saved:
             self.stdout.write(f"Creating {num_saved} saved project relationships...")
         else:
@@ -451,7 +495,9 @@ class Command(BaseCommand):
                         if not SavedProject.objects.filter(
                             investor=investor, project=project
                         ).exists():
-                            SavedProject.objects.create(investor=investor, project=project)
+                            SavedProject.objects.create(
+                                investor=investor, project=project
+                            )
                             saved_created += 1
 
         self.stdout.write(
@@ -463,19 +509,23 @@ class Command(BaseCommand):
         """Create investment subscriptions for projects."""
         if not num_subscriptions:
             return 0
-        
+
         self.stdout.write(f"Creating {num_subscriptions} investment subscriptions...")
-        
+
         # Get all projects and investors
         all_projects = list(StartupProject.objects.all())
         all_investors = list(InvestorProfile.objects.all())
-        
+
         if not all_projects:
-            self.stdout.write(self.style.WARNING("No projects available for subscriptions."))
+            self.stdout.write(
+                self.style.WARNING("No projects available for subscriptions.")
+            )
             return 0
-        
+
         if not all_investors:
-            self.stdout.write(self.style.WARNING("No investors available for subscriptions."))
+            self.stdout.write(
+                self.style.WARNING("No investors available for subscriptions.")
+            )
             return 0
 
         subscriptions_created = 0
@@ -499,11 +549,13 @@ class Command(BaseCommand):
                 ).exists():
                     # Generate realistic subscription amount (1-50% of funding goal)
                     if project.funding_goal:
-                        max_share = min(float(project.funding_goal) * 0.5, 100000)  # Max 50% or 100k
+                        max_share = min(
+                            float(project.funding_goal) * 0.5, 100000
+                        )  # Max 50% or 100k
                         share = random.randint(1000, int(max_share))
                     else:
                         share = random.randint(1000, 50000)
-                    
+
                     Subscription.objects.create(
                         investor=investor,
                         project=project,
@@ -526,17 +578,19 @@ class Command(BaseCommand):
         """Create project revisions to track changes."""
         if not num_revisions:
             return 0
-        
+
         self.stdout.write(f"Creating {num_revisions} project revisions...")
-        
+
         # Get all projects and users
         all_projects = list(StartupProject.objects.all())
         all_users = list(UserProfile.objects.all())
-        
+
         if not all_projects:
-            self.stdout.write(self.style.WARNING("No projects available for revisions."))
+            self.stdout.write(
+                self.style.WARNING("No projects available for revisions.")
+            )
             return 0
-        
+
         if not all_users:
             self.stdout.write(self.style.WARNING("No users available for revisions."))
             return 0
@@ -556,18 +610,28 @@ class Command(BaseCommand):
                 try:
                     # Generate fake revision changes
                     changes = {
-                        "field": random.choice(["subject", "description", "idea", "website", "funding_goal"]),
+                        "field": random.choice(
+                            [
+                                "subject",
+                                "description",
+                                "idea",
+                                "website",
+                                "funding_goal",
+                            ]
+                        ),
                         "old_value": f"Old {random.choice(['value', 'text', 'amount'])}",
                         "new_value": f"New {random.choice(['value', 'text', 'amount'])}",
-                        "reason": random.choice([
-                            "Updated project details",
-                            "Corrected information",
-                            "Added more details",
-                            "Fixed typo",
-                            "Updated funding goal"
-                        ])
+                        "reason": random.choice(
+                            [
+                                "Updated project details",
+                                "Corrected information",
+                                "Added more details",
+                                "Fixed typo",
+                                "Updated funding goal",
+                            ]
+                        ),
                     }
-                    
+
                     ProjectRevision.objects.create(
                         project=project,
                         updated_by=random.choice(all_users),
@@ -590,19 +654,21 @@ class Command(BaseCommand):
         """Create chat rooms and messages using MongoDB models."""
         if not num_chat_rooms and not num_chat_messages:
             return 0, 0
-        
+
         try:
             from communications.mongo_models import Room, Message
         except ImportError:
             self.stdout.write(
-                self.style.WARNING("MongoDB models not available. Skipping chat data creation.")
+                self.style.WARNING(
+                    "MongoDB models not available. Skipping chat data creation."
+                )
             )
             return 0, 0
-        
+
         rooms_created = 0
         messages_created = 0
         fake = Faker()
-        
+
         # Get all users
         all_users = list(UserProfile.objects.all())
         if not all_users:
@@ -612,32 +678,29 @@ class Command(BaseCommand):
         # Create chat rooms
         if num_chat_rooms:
             self.stdout.write(f"Creating {num_chat_rooms} chat rooms...")
-            
+
             for i in range(num_chat_rooms):
                 try:
                     # Create room with random participants
                     room_name = f"Room {fake.word().title()} {i+1}"
                     room = Room(name=room_name)
-                    
+
                     # Add 2-5 random participants
                     num_participants = random.randint(2, min(5, len(all_users)))
                     selected_users = random.sample(all_users, num_participants)
-                    
+
                     for user in selected_users:
                         room.add_participant(
-                            user.id,
-                            user.username,
-                            user.first_name,
-                            user.last_name
+                            user.id, user.username, user.first_name, user.last_name
                         )
-                    
+
                     room.save()
                     rooms_created += 1
                 except Exception as e:
                     self.stdout.write(
                         self.style.WARNING(f"Could not create chat room {i+1}: {e}")
                     )
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f"Created {rooms_created} chat rooms.")
             )
@@ -645,12 +708,14 @@ class Command(BaseCommand):
         # Create chat messages
         if num_chat_messages and rooms_created > 0:
             self.stdout.write(f"Creating {num_chat_messages} chat messages...")
-            
+
             all_rooms = list(Room.objects.all())
             if not all_rooms:
-                self.stdout.write(self.style.WARNING("No chat rooms available for messages."))
+                self.stdout.write(
+                    self.style.WARNING("No chat rooms available for messages.")
+                )
                 return rooms_created, 0
-            
+
             # Distribute messages among rooms
             messages_per_room = num_chat_messages // len(all_rooms)
             extra_messages = num_chat_messages % len(all_rooms)
@@ -665,14 +730,14 @@ class Command(BaseCommand):
                         # Select a random participant from the room
                         if room.participants:
                             participant = random.choice(room.participants)
-                            
+
                             message = Message(
                                 room=room,
                                 sender_id=participant["id"],
                                 sender_first_name=participant["first_name"],
                                 sender_last_name=participant["last_name"],
                                 text=fake.sentence(),
-                                is_read=random.choice([True, False])
+                                is_read=random.choice([True, False]),
                             )
                             message.save()
                             messages_created += 1
@@ -808,7 +873,9 @@ class Command(BaseCommand):
             self.create_project_revisions(num_revisions)
 
         # Create chat rooms and messages if requested
-        if self.should_create_model("chat-rooms", selected_models) or self.should_create_model("chat-messages", selected_models):
+        if self.should_create_model(
+            "chat-rooms", selected_models
+        ) or self.should_create_model("chat-messages", selected_models):
             self.create_chat_rooms_and_messages(num_chat_rooms, num_chat_messages)
 
         # Print summary
