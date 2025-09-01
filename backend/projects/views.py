@@ -10,7 +10,8 @@ from .models import StartupProject
 from .models import StartupProject, ProjectRevision
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-
+from django.conf import settings
+import requests
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """ViewSet for listing, retrieving, and subscribing to projects."""
@@ -40,6 +41,27 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
+        try:
+            response = requests.post(
+                url="http://host.docker.internal:8001/notify",
+                json={
+                    "user_id": str(request.user.id),
+                    "type": "subscribed",
+                    "title": f"New Project {pk}Update",
+                    "message": "A project you follow has been updated.",
+                    "data": {
+                        "project_id": pk,
+                    }
+                },
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Token": settings.NOTIFICATION_SERVICE_API_TOKEN
+                }
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print("Failed to send notification:", e)
+
         return Response(
             {"message": f"Subscribed to project {pk}"}, status=status.HTTP_201_CREATED
         )
