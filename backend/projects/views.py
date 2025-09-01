@@ -1,30 +1,18 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, BasePermission, SAFE_METHODS
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import F
 from django.db import transaction
 
-from .serializers import ProjectSerializer
-from .models import StartupProject
 from profiles.models import InvestorProfile
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from .serializers import ProjectSerializer, SubscriptionSerializer
 from .models import StartupProject, Subscription, ProjectRevision
-from .permissions import IsInvestor
+from .permissions import IsInvestor, IsStartup
 
-
-class IsStartup(BasePermission):
-    """Allow only startups to create projects"""
-    def has_permission(self, request, view):
-        return str(getattr(request.user, "role", "")) == 2 #Returns True or False to allow access
-    
-class IsInvestor(BasePermission):
-    """Allow only investors to view/follow projects"""
-    def has_permission(self, request, view):
-        return str(getattr(request.user, "role", "")) == 1 #Returns True or False to allow access
     
 class ProjectViewSet(viewsets.ModelViewSet):
     """ViewSet for listing, retrieving, and subscribing to projects."""
@@ -115,7 +103,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
         try:
-            project = StartupProject.objects.get(pk=pk)
+            project = self.get_object()
         except StartupProject.DoesNotExist:
             return Response(
                 {"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND
