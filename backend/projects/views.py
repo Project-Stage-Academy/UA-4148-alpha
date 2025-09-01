@@ -1,6 +1,6 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import IsAuthenticated, BasePermission, SAFE_METHODS
 from rest_framework.response import Response
 from django.db.models import F
 from django.db import transaction
@@ -9,21 +9,37 @@ from .serializers import ProjectSerializer
 from .models import StartupProject
 from profiles.models import InvestorProfile
 
-# Custom permission to allow access only for investors
-class IsInvestor(BasePermission):
-    """Investor Only Access Class"""
-    
+
+class IsStartup(BasePermission):
+    """Allow only startups to create projects"""
     def has_permission(self, request, view):
-        return hasattr(request.user, 'investorprofile') #Returns True or False to allow access
+        return str(getattr(request.user, "role", "")) == 2 #Returns True or False to allow access
+    
+class IsInvestor(BasePermission):
+    """Allow only investors to view/follow projects"""
+    def has_permission(self, request, view):
+        return str(getattr(request.user, "role", "")) == 1 #Returns True or False to allow access
     
 class ProjectViewSet(viewsets.ModelViewSet):
     """ViewSet for listing, retrieving, and subscribing to projects."""
-
-    permission_classes = [IsAuthenticated & IsInvestor]
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
+    
+    def get_permissions(self):
+        if self.action in ['create']:
+            permission_classes = [IsAuthenticated, IsStartup]
+        elif self.action in ['list', 'retrieve', 'save_project', 'unsave_project']:
+            permission_classes = [IsAuthenticated, IsInvestor]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def perform_create(self, serializer):
+        """Creation a project is automatically link it to a startup"""
+        serializer.save(startup=self.request.user.startupprofile)
 
     def list(self, request, *args, **kwargs):
+        """Viewing projects by investors"""
         queryset = self.get_queryset().order_by("-created_at")
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
