@@ -24,18 +24,15 @@ export const WebSocketProvider = ({ children }: PropsWithChildren) => {
 
     socketRef.current.onopen = () => console.log("Connected");
     socketRef.current.onclose = () => console.log("Disconnected");
-
-    return () => socketRef.current?.close();
-  }, [accessToken, user]);
-
-  useEffect(() => {
-    if (!socketRef.current) return;
+    socketRef.current.onerror = () => console.log("Error");
 
     socketRef.current.onmessage = (e) => {
       const message = JSON.parse(e.data);
       console.log("e", message);
     };
-  }, []);
+    return () => socketRef.current?.close();
+  }, [accessToken, user]);
+
 
   return (
     <WebSocketContext.Provider value={socketRef}>
