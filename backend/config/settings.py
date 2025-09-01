@@ -211,6 +211,10 @@ mongoengine.connect(
     db=MONGO_DB_NAME, host=f"mongodb://{MONGO_HOST}:{MONGO_PORT}", alias="chat_db"
 )
 
+# Ensure logs directory exists
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
+
 # Logging Configuration
 LOGGING = {
     "version": 1,
@@ -231,14 +235,14 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
-        "file": {
-            "level": "INFO",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": BASE_DIR / "logs" / "forum.log",
-            "when": "midnight",
-            "backupCount": 7,
-            "formatter": "verbose",
-        },
+                 "file": {
+             "level": "INFO",
+             "class": "logging.handlers.TimedRotatingFileHandler",
+             "filename": LOGS_DIR / "forum.log",
+             "when": "midnight",
+             "backupCount": 7,
+             "formatter": "verbose",
+         },
     },
     "loggers": {
         "django": {
