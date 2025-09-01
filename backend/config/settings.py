@@ -235,14 +235,14 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
-                 "file": {
-             "level": "INFO",
-             "class": "logging.handlers.TimedRotatingFileHandler",
-             "filename": LOGS_DIR / "forum.log",
-             "when": "midnight",
-             "backupCount": 7,
-             "formatter": "verbose",
-         },
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": LOGS_DIR / "forum.log",
+            "when": "midnight",
+            "backupCount": 7,
+            "formatter": "verbose",
+        },
     },
     "loggers": {
         "django": {
