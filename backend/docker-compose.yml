@@ -24,6 +24,7 @@ services:
       - MONGO_PORT=${MONGO_PORT}
       - MONGO_DB_NAME=${MONGO_DB_NAME}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=config.settings
 
   db:
     image: postgres:15
@@ -64,11 +65,13 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=${MONGO_DB_NAME}
     healthcheck:
-        test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-        interval: 10s
-        timeout: 5s
-        retries: 5
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

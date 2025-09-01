@@ -5,84 +5,130 @@
     <title>Chat Room</title>
 </head>
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
-    <input id="chat-message-input" type="text" size="100" placeholder="Type a message..."><br>
-    <input id="chat-message-submit" type="button" value="Send">
-    {{ room_name|json_script:"room-name" }}
+    <div id="chat-log" style="width: 100%; height: 300px; overflow-y: scroll; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
+    <textarea id="chat-message-input" rows="3" cols="100" placeholder="Type a message..."></textarea><br>
+    <input id="chat-message-submit" type="button" value="Send" disabled>
+
+    {{ other_user_id|json_script:"other-user-id" }}
+    {{ current_user_id|json_script:"current-user-id" }}
+
     <script>
-        let roomName = null;
+        let currentUserId = null;
+        let otherUserId = null;
+        let chatSocket = null;
+        let reconnectDelay = 2000;
+        let hasFetchedHistory = false;
+
         try {
-            const roomNameEl = document.getElementById('room-name');
-            if (!roomNameEl) {
-                throw new Error("Room name has not been found");
-            }
-            roomName = JSON.parse(roomNameEl.textContent);
+            otherUserId = JSON.parse(document.getElementById('other-user-id').textContent);
+            currentUserId = JSON.parse(document.getElementById('current-user-id').textContent);
+            console.log("Loaded currentUserId:", currentUserId);
         } catch (err) {
-            console.error("Error parsing room name:", err);
+            console.error("Error parsing user IDs:", err);
         }
 
         const chatLog = document.querySelector('#chat-log');
         const messageInputDom = document.querySelector('#chat-message-input');
         const messageSubmitButton = document.querySelector('#chat-message-submit');
 
-        let chatSocket = null;
-        let reconnectDelay = 2000;
-
-        function appendLog(text) {
-            chatLog.value += text + '\n';
+        function appendLog(text, cssClass = "") {
+            const newLine = document.createElement("div");
+            newLine.textContent = text;
+            if (cssClass) newLine.classList.add(cssClass);
+            chatLog.appendChild(newLine);
             chatLog.scrollTop = chatLog.scrollHeight;
         }
 
         function bindMessageEvents() {
-            if (!messageInputDom || !messageSubmitButton) return;
-
-            messageInputDom.addEventListener('keydown', function(e) {
+            messageInputDom.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     messageSubmitButton.click();
                 }
             });
 
-            messageSubmitButton.onclick = function() {
+            messageSubmitButton.onclick = function () {
                 const message = messageInputDom.value.trim();
                 if (!message || chatSocket.readyState !== WebSocket.OPEN) return;
 
-                chatSocket.send(JSON.stringify({ message }));
+                chatSocket.send(JSON.stringify({ type: "message", message }));
                 messageInputDom.value = '';
             };
         }
 
+        function getDateTime(timestamp) {
+            try {
+                return new Date(timestamp).toLocaleString();
+            } catch {
+                return "";
+            }
+        }
+
+        function renderMessage(msg) {
+            const name = `${msg.first_name} ${msg.last_name}`;
+            const time = getDateTime(msg.timestamp);
+
+            if (String(msg.sender_id) === String(currentUserId)) {
+                appendLog(`Me: ${msg.text}    ${time}`, "my-message");
+            } else {
+                appendLog(`${name}: ${msg.text}    ${time}`, "other-message");
+            }
+        }
+
         function initChatSocket() {
-            if (!roomName) {
-                alert("Unable to join chat: missing room name.");
+            if (!otherUserId) {
+                alert("Missing user ID for chat.");
                 return;
             }
 
-            const socketUrl = 'ws://' + window.location.host + '/ws/chat/' + encodeURIComponent(roomName) + '/';
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                alert("No access token found. Please login first.");
+                return;
+            }
+
+            const socketUrl = `ws://${window.location.host}/ws/chat/${otherUserId}/?token=${token}`;
             chatSocket = new WebSocket(socketUrl);
 
             chatSocket.onopen = () => {
                 reconnectDelay = 2000;
-                console.log("Connected to chat server");
                 appendLog("[Connected to chat]");
                 messageSubmitButton.disabled = false;
+                bindMessageEvents();
             };
 
             chatSocket.onmessage = (e) => {
                 try {
                     const data = JSON.parse(e.data);
-                    if (data?.message) {
-                        appendLog(data.message);
+
+                    switch (data.type) {
+                        case "message":
+                            renderMessage(data);
+                            break;
+                        case "history":
+                            if (!hasFetchedHistory) {
+                                data.messages.forEach(renderMessage);
+                                hasFetchedHistory = true;
+                            }
+                            break;
+                        case "read":
+                            console.log("Read messages:", data.message_ids);
+                            break;
+                        case "error":
+                            appendLog(`[Error] ${data.error}`);
+                            break;
+                        default:
+                            console.warn("Unknown message type:", data);
                     }
                 } catch (err) {
-                    console.error("Error parsing incoming WebSocket message:", err);
+                    console.error("Error parsing WebSocket message:", err);
                 }
             };
 
-            chatSocket.onclose = (e) => {
+            chatSocket.onclose = () => {
+                hasFetchedHistory = false;
                 messageSubmitButton.disabled = true;
-                console.warn('Chat socket closed unexpectedly, reconnecting in ' + reconnectDelay / 1000 + 's...');
-                appendLog("[Disconnected, retrying in ${reconnectDelay / 1000} seconds...]");
+                appendLog(`[Disconnected, retrying in ${reconnectDelay / 1000} seconds...]`);
                 setTimeout(() => {
                     reconnectDelay = Math.min(reconnectDelay * 2, 30000);
                     initChatSocket();
@@ -94,7 +140,6 @@
                 chatSocket.close();
             };
         }
-        bindMessageEvents();
         initChatSocket();
     </script>
 </body>

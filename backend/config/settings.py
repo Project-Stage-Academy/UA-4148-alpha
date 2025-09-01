@@ -181,14 +181,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 FRONTEND_URL = env("FRONTEND_URL")
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 # Channels
@@ -207,7 +207,9 @@ MONGO_HOST = env("MONGO_HOST")
 MONGO_PORT = env("MONGO_PORT", cast=int)
 MONGO_DB_NAME = env("MONGO_DB_NAME")
 
-mongoengine.connect(db=MONGO_DB_NAME, host=f"mongodb://{MONGO_HOST}:{MONGO_PORT}")
+mongoengine.connect(
+    db=MONGO_DB_NAME, host=f"mongodb://{MONGO_HOST}:{MONGO_PORT}", alias="chat_db"
+)
 
 # Logging Configuration
 LOGGING = {
