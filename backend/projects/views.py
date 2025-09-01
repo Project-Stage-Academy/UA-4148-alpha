@@ -60,7 +60,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         Allow an authenticated investor to follow (save) a startup project.
         """
         
-        investor_profile = request.user.investorprofile
+        investor_profile = getattr(request.user, "investorprofile", None)
+        if not investor_profile:
+            return Response(
+                {"error": "Investor profile not found for this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         project = self.get_object()
         
         # Prevent duplicates
