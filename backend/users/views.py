@@ -69,7 +69,9 @@ class UserViewSet(viewsets.ViewSet):
     # TODO: remove /me route after testing
     @action(detail=False, methods=["get"], url_path="me")
     def me(self, request):
-        logger.info(f"User profile request from user ID: {request.user.id if request.user.is_authenticated else 'anonymous'}")
+        logger.info(
+            f"User profile request from user ID: {request.user.id if request.user.is_authenticated else 'anonymous'}"
+        )
         user = request.user
         if not user.is_authenticated:
             logger.warning("Unauthenticated user attempted to access profile endpoint")
@@ -88,12 +90,16 @@ class UserViewSet(viewsets.ViewSet):
         """
         Create the user's role.
         """
-        logger.info(f"Role creation request from user ID: {request.user.id if request.user.is_authenticated else 'anonymous'}")
+        logger.info(
+            f"Role creation request from user ID: {request.user.id if request.user.is_authenticated else 'anonymous'}"
+        )
         serializer = UserRoleSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             role = serializer.validated_data["role"]
             new_role = UserRole.objects.create(role=role)
-            logger.info(f"Successfully created role: {new_role.role} with ID: {new_role.id}")
+            logger.info(
+                f"Successfully created role: {new_role.role} with ID: {new_role.id}"
+            )
             return Response(
                 {"message": f"Role {new_role.role} created."},
                 status=status.HTTP_201_CREATED,
@@ -109,17 +115,23 @@ class UserViewSet(viewsets.ViewSet):
         """
         user = request.user
         role_id = request.data.get("role_id")
-        logger.info(f"Role switch request from user ID: {user.id} to role ID: {role_id}")
-        
+        logger.info(
+            f"Role switch request from user ID: {user.id} to role ID: {role_id}"
+        )
+
         if not role_id:
-            logger.warning(f"Role switch failed: missing role_id for user ID: {user.id}")
+            logger.warning(
+                f"Role switch failed: missing role_id for user ID: {user.id}"
+            )
             return Response(
                 {"detail": "Role ID is required."}, status=status.HTTP_400_BAD_REQUEST
             )
 
         role = UserRole.objects.filter(id=role_id).first()
         if not role:
-            logger.warning(f"Role switch failed: role ID {role_id} does not exist for user ID: {user.id}")
+            logger.warning(
+                f"Role switch failed: role ID {role_id} does not exist for user ID: {user.id}"
+            )
             return Response(
                 {"detail": "Role does not exist."}, status=status.HTTP_404_NOT_FOUND
             )
@@ -127,7 +139,9 @@ class UserViewSet(viewsets.ViewSet):
         old_role = user.role.role if user.role else "None"
         user.role = role
         user.save()
-        logger.info(f"Successfully switched user ID: {user.id} from role '{old_role}' to '{role.role}'")
+        logger.info(
+            f"Successfully switched user ID: {user.id} from role '{old_role}' to '{role.role}'"
+        )
         return Response(
             {"message": "Role switched successfully."}, status=status.HTTP_200_OK
         )
@@ -137,7 +151,9 @@ class UserViewSet(viewsets.ViewSet):
         """
         Register a new user.
         """
-        logger.info(f"User registration attempt for email: {request.data.get('email', 'not provided')}")
+        logger.info(
+            f"User registration attempt for email: {request.data.get('email', 'not provided')}"
+        )
         serializer = UserRegistrationSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -152,7 +168,9 @@ class UserViewSet(viewsets.ViewSet):
                 token = generate_activation_token(user)
                 send_activation_email(token, user.email)
 
-                logger.info(f"Successfully registered user ID: {user.id} with email: {user.email}")
+                logger.info(
+                    f"Successfully registered user ID: {user.id} with email: {user.email}"
+                )
                 # TODO: tokens
                 return Response(
                     {
@@ -169,7 +187,9 @@ class UserViewSet(viewsets.ViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
-        logger.error(f"User registration failed with validation errors: {serializer.errors}")
+        logger.error(
+            f"User registration failed with validation errors: {serializer.errors}"
+        )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], url_path="activate")
@@ -180,7 +200,7 @@ class UserViewSet(viewsets.ViewSet):
         """
         token = request.data.get("token")
         logger.info("Account activation attempt")
-        
+
         if not token:
             logger.warning("Account activation failed: missing token")
             return Response(
@@ -209,7 +229,7 @@ class UserViewSet(viewsets.ViewSet):
         """
         email = request.data.get("email")
         logger.info(f"Resend activation request for email: {email}")
-        
+
         if not email:
             logger.warning("Resend activation failed: missing email")
             return Response(
@@ -226,7 +246,9 @@ class UserViewSet(viewsets.ViewSet):
             )
 
         if user.is_active:
-            logger.warning(f"Resend activation failed: account already active for email: {email}")
+            logger.warning(
+                f"Resend activation failed: account already active for email: {email}"
+            )
             return Response(
                 {"detail": "Account is already active."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -238,7 +260,10 @@ class UserViewSet(viewsets.ViewSet):
             send_activation_email(token, user.email)
             logger.info(f"Successfully resent activation email to user ID: {user.id}")
         except Exception as e:
-            logger.error(f"Error sending activation email to user ID {user.id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error sending activation email to user ID {user.id}: {str(e)}",
+                exc_info=True,
+            )
 
         return Response(
             {"detail": "If the email exists, an activation link has been sent."},
@@ -257,13 +282,15 @@ class UserViewSet(viewsets.ViewSet):
                 {"detail": "Email and password are required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         try:
             user = authenticate(email=email, password=password)
 
             if user is not None:
                 refresh = RefreshToken.for_user(user)
-                logger.info(f"Successful login for user ID: {user.id} with email: {email}")
+                logger.info(
+                    f"Successful login for user ID: {user.id} with email: {email}"
+                )
                 return Response(
                     {
                         "refresh": str(refresh),
@@ -281,12 +308,16 @@ class UserViewSet(viewsets.ViewSet):
                     status=status.HTTP_200_OK,
                 )
 
-            logger.warning(f"Failed login attempt for email: {email} - invalid credentials")
+            logger.warning(
+                f"Failed login attempt for email: {email} - invalid credentials"
+            )
             return Response(
                 {"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
             )
         except Exception as e:
-            logger.error(f"Error during login for email {email}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error during login for email {email}: {str(e)}", exc_info=True
+            )
             return Response(
                 {"detail": "Login failed due to an internal error."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -319,7 +350,9 @@ class UserViewSet(viewsets.ViewSet):
                     {"detail": "Password reset failed due to an internal error."},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
-        logger.warning(f"Password reset failed with validation errors: {serializer.errors}")
+        logger.warning(
+            f"Password reset failed with validation errors: {serializer.errors}"
+        )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["post"], url_path="reset-password-request")
@@ -327,7 +360,9 @@ class UserViewSet(viewsets.ViewSet):
         logger.info("Password reset request attempt")
         serializer = PasswordResetRequestSerializer(data=request.data)
         if not serializer.is_valid():
-            logger.warning(f"Password reset request failed with validation errors: {serializer.errors}")
+            logger.warning(
+                f"Password reset request failed with validation errors: {serializer.errors}"
+            )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
@@ -344,7 +379,10 @@ class UserViewSet(viewsets.ViewSet):
                 )
                 logger.info(f"Password reset email sent to user ID: {user.id}")
             except Exception as e:
-                logger.error(f"Error sending password reset email to user ID {user.id}: {str(e)}", exc_info=True)
+                logger.error(
+                    f"Error sending password reset email to user ID {user.id}: {str(e)}",
+                    exc_info=True,
+                )
         else:
             logger.info(f"Password reset request for non-existent email: {email}")
 

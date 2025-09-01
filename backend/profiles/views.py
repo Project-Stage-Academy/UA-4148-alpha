@@ -35,7 +35,9 @@ class ViewedStartupCreateView(APIView):
     permission_classes = [IsInvestor]
 
     def post(self, request, startup_id):
-        logger.info(f"ViewedStartup create request from user ID: {request.user.id} for startup ID: {startup_id}")
+        logger.info(
+            f"ViewedStartup create request from user ID: {request.user.id} for startup ID: {startup_id}"
+        )
         try:
             startup = get_object_or_404(StartupProfile, id=startup_id)
 
@@ -47,13 +49,18 @@ class ViewedStartupCreateView(APIView):
                 obj.viewed_at = timezone.now()
                 obj.save()
 
-            logger.info(f"Successfully recorded view for startup '{startup.company_name}' by user ID: {request.user.id}")
+            logger.info(
+                f"Successfully recorded view for startup '{startup.company_name}' by user ID: {request.user.id}"
+            )
             return Response(
                 {"message": f"Startup '{startup.company_name}' viewed successfully."},
                 status=status.HTTP_201_CREATED,
             )
         except Exception as e:
-            logger.error(f"Error creating ViewedStartup for user ID {request.user.id} and startup ID {startup_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error creating ViewedStartup for user ID {request.user.id} and startup ID {startup_id}: {str(e)}",
+                exc_info=True,
+            )
             return Response(
                 {"detail": "Failed to record startup view."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -67,10 +74,17 @@ class ClearViewedStartupsView(APIView):
         logger.info(f"Clear viewed startups request from user ID: {request.user.id}")
         try:
             ViewedStartup.objects.filter(user=request.user).delete()
-            logger.info(f"Successfully cleared viewed startups history for user ID: {request.user.id}")
-            return Response({"message": "Viewed startups history cleared successfully."})
+            logger.info(
+                f"Successfully cleared viewed startups history for user ID: {request.user.id}"
+            )
+            return Response(
+                {"message": "Viewed startups history cleared successfully."}
+            )
         except Exception as e:
-            logger.error(f"Error clearing viewed startups for user ID {request.user.id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error clearing viewed startups for user ID {request.user.id}: {str(e)}",
+                exc_info=True,
+            )
             return Response(
                 {"detail": "Failed to clear viewed startups history."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -82,7 +96,9 @@ class StartupViewSet(ReadOnlyModelViewSet):
     serializer_class = StartupProfileSerializer
 
     def retrieve(self, request, *args, **kwargs):
-        logger.info(f"Startup retrieve request from user ID: {request.user.id} for startup ID: {kwargs.get('pk')}")
+        logger.info(
+            f"Startup retrieve request from user ID: {request.user.id} for startup ID: {kwargs.get('pk')}"
+        )
         try:
             response = super().retrieve(request, *args, **kwargs)
 
@@ -94,11 +110,16 @@ class StartupViewSet(ReadOnlyModelViewSet):
                 if not created:
                     obj.viewed_at = timezone.now()
                     obj.save()
-                logger.info(f"Successfully recorded view for startup '{startup.company_name}' by investor user ID: {request.user.id}")
+                logger.info(
+                    f"Successfully recorded view for startup '{startup.company_name}' by investor user ID: {request.user.id}"
+                )
 
             return response
         except Exception as e:
-            logger.error(f"Error retrieving startup for user ID {request.user.id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error retrieving startup for user ID {request.user.id}: {str(e)}",
+                exc_info=True,
+            )
             return Response(
                 {"detail": "Failed to retrieve startup."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
