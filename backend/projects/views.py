@@ -24,7 +24,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create']:
             permission_classes = [IsAuthenticated, IsStartup]
-        elif self.action in ['list', 'retrieve', 'save_project', 'unsave_project']:
+        elif self.action in ['list', 'retrieve', 'save', 'unsave']:
             permission_classes = [IsAuthenticated, IsInvestor]
         else:
             permission_classes = [IsAuthenticated]
@@ -53,9 +53,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     # Follow for saving projects by investor
-    @action(detail=True, methods=["post"], url_path="follow")
-    def save_project(self, request, pk=None):
-        """Allow an authenticated investor to follow (save) a startup project."""
+    @action(detail=True, methods=["post"], url_path="save")
+    def save(self, request, pk=None):
+        """
+        POST  /api/startups/{pk}/save/
+        Allow an authenticated investor to follow (save) a startup project.
+        """
         
         investor_profile = request.user.investorprofile
         project = self.get_object()
@@ -81,8 +84,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
             
     # Unfollow" to remove a project from saved
-    @action(detail=True, methods=["post"], url_path="unfollow")
-    def unsave_project(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="unsave")
+    def unsave(self, request, pk=None):
         """Allow an authenticated investor to unfollow (remove) a startup project."""
         investor_profile = request.user.investorprofile
         project = self.get_object()
