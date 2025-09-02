@@ -2,11 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { signIn, type SignInData, type SignInResponse } from "../api/auth";
 import { useAuthContext } from "./useAuthContext";
 import type { AxiosError } from "axios";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 export function useSignInMutate() {
-  const navigate = useNavigate();
   const auth = useAuthContext();
   return useMutation<
     SignInResponse,
@@ -16,26 +13,21 @@ export function useSignInMutate() {
     mutationFn: signIn,
     onSuccess: (data) => {
       auth?.login(data);
-      navigate("/enterprises-and-industries");
+      // TODO: Navigate to dashboard when implemented
     },
     onError: (error) => {
       console.error(error);
-      if (error.status && error.status >= 500) {
-        toast.error("Серверна помилка, спробуйте пізніше");
-        return;
-      }
-      if (error.code === "ERR_NETWORK") {
-        toast.error(
-          "Помилка пiдключення."
-        );
-        return;
-      }
       if (error.response?.data.detail == "Invalid credentials") {
-        toast.error(
+        throw new Error(
           "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."
         );
-        return;
       }
+      if (error.response?.status === 500) {
+        throw new Error("Серверна помилка, спробуйте пізніше");
+      }
+      throw new Error(
+        "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."
+      );
     },
   });
 }
