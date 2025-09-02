@@ -77,7 +77,7 @@ class StartupProfile(models.Model):
 class InvestorProfile(models.Model):
     """Profile for an investor, including company info and website."""
 
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investors"
     )
     company_name = models.CharField(max_length=150, blank=True)
