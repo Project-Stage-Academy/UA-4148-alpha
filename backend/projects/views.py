@@ -3,19 +3,18 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import F
-
-from .serializers import ProjectSerializer
-from .models import StartupProject
-
-from .models import StartupProject, ProjectRevision
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+
+from .serializers import ProjectSerializer, SubscriptionSerializer
+from .models import StartupProject, Subscription, ProjectRevision
+from .permissions import IsInvestor
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """ViewSet for listing, retrieving, and subscribing to projects."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsInvestor]
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
 
@@ -31,8 +30,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         StartupProject.objects.filter(pk=project.pk).update(
             views_count=F("views_count") + 1
         )
-
-        # Updating the object (project) to give the serializer the current value
         project.refresh_from_db(fields=["views_count"])
 
         serializer = self.get_serializer(project)
@@ -40,9 +37,38 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
-        return Response(
-            {"message": f"Subscribed to project {pk}"}, status=status.HTTP_201_CREATED
-        )
+        try:
+            project = StartupProject.objects.get(pk=pk)
+        except StartupProject.DoesNotExist:
+            return Response(
+                {"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = SubscriptionSerializer(data=request.data)
+        if serializer.is_valid():
+            share = serializer.validated_data["share"]
+
+            if project.funding_goal is None:
+                return Response(
+                    {"error": "Project has no funding goal set."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if project.remaining_funding() < share:
+                return Response(
+                    {"error": "Funding goal exceeded"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            subscription = serializer.save(
+                investor=request.user.investorprofile, project=project
+            )
+            return Response(
+                SubscriptionSerializer(subscription).data,
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
     def update_project(self, request, pk=None):

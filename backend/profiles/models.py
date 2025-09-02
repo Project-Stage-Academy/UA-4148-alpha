@@ -1,5 +1,8 @@
 from django.conf import settings
 from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class Industry(models.Model):
@@ -77,7 +80,7 @@ class InvestorProfile(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investors"
     )
-    company_name = models.CharField(max_length=150)
+    company_name = models.CharField(max_length=150, blank=True)
     website = models.URLField(blank=True)
 
     saved_projects = models.ManyToManyField(
@@ -86,7 +89,7 @@ class InvestorProfile(models.Model):
     )
 
     def __str__(self):
-        return self.company_name
+        return self.company_name or self.user.username
 
 
 class ViewedStartup(models.Model):
