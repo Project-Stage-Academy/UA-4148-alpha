@@ -32,7 +32,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Creation a project is automatically link it to a startup"""
-        serializer.save(startup=self.request.user.startupprofile)
+        startup_profile = getattr(self.request.user, "startupprofile", None)
+        if not startup_profile:
+            raise Exception("Startup profile not found for this user.")
+        serializer.save(startup=startup_profile)
 
     def list(self, request, *args, **kwargs):
         """Viewing projects by investors"""
