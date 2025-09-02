@@ -11,6 +11,7 @@ from .models import StartupProject, ProjectRevision
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
+
 class ProjectViewSet(viewsets.ModelViewSet):
     """ViewSet for listing, retrieving, and subscribing to projects."""
 
