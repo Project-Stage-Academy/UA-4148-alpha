@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSignInMutate } from "@/hooks/useSignInMutate";
 import { useAuthContext } from "@/hooks/useAuthContext";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
 
 const signInSchema = z.object({
   email: z
@@ -19,7 +18,6 @@ const signInSchema = z.object({
 export type SignInFormValues = z.infer<typeof signInSchema>;
 
 export function SignIn() {
-  const navigate = useNavigate();
   const auth = useAuthContext();
   const signIn = useSignInMutate();
   const form = useForm<SignInFormValues>({
@@ -33,7 +31,7 @@ export function SignIn() {
 
   useEffect(() => {
     if (auth?.user) {
-      navigate("/enterprises-and-industries");
+      // TODO: navigate to user profile or dashboard when route available
     }
   }, [auth?.user]);
 
@@ -64,13 +62,9 @@ export function SignIn() {
         </Form>
         <div className="font-display text-sm">
           <span>Вперше на нашому сайті?</span>{" "}
-          <Button
-            variant={"tertiary"}
-            className="underline font-semibold underline-offset-4"
-          >
-            <Link to="/signup" className="text-sm">
-              Зареєструйтесь
-            </Link>
+          {/* TODO: Link tag with to attribute and signup value */}
+          <Button variant={'tertiary'} className="underline font-semibold">
+            Зареєструйтесь
           </Button>
         </div>
       </div>
