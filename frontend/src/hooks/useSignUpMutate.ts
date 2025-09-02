@@ -2,7 +2,6 @@ import { signUp, type SignUpData, type SignUpResponse } from "@/api/auth";
 import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 export function useSignUpMutate() {
   const navigate = useNavigate();
@@ -14,19 +13,12 @@ export function useSignUpMutate() {
     onError: (error) => {
       console.log(error);
       if (error.status && error.status >= 500) {
-        toast.error("Серверна помилка, спробуйте пізніше");
-        return;
+        throw new Error("Серверна помилка, спробуйте пізніше");
       }
       if (error.response?.data) {
         throw error.response?.data;
       }
-      if (error.code === "ERR_NETWORK") {
-        toast.error(
-          "Помилка пiдключення."
-        );
-        return;
-      }
-      toast.error(
+      throw new Error(
         "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."
       );
     },
