@@ -77,15 +77,17 @@ class StartupProfile(models.Model):
 class InvestorProfile(models.Model):
     """Profile for an investor, including company info and website."""
 
-    user = models.OneToOneField(    # Change user = models.ForeignKey on user = models.OneToOneField in class InvestorProfile in profiles/models because Django does not automatically create the user.investorprofile attribute for ForeignKey
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investorprofile"
+    user = models.OneToOneField(  # Change user = models.ForeignKey on user = models.OneToOneField in class InvestorProfile in profiles/models because Django does not automatically create the user.investorprofile attribute for ForeignKey
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="investorprofile",
     )
     company_name = models.CharField(max_length=150, blank=True)
     website = models.URLField(blank=True)
-    
+
     saved_projects = models.ManyToManyField(
-        'projects.StartupProject',
-        through='projects.SavedProject',
+        "projects.StartupProject",
+        through="projects.SavedProject",
     )
 
     def __str__(self):

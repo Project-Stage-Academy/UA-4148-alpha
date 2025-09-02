@@ -24,7 +24,8 @@ class IsInvestor(BasePermission):
                 return True
 
         return False
-    
+
+
 class IsStartup(BasePermission):
     message = "User must be a startup."
 
@@ -42,9 +43,10 @@ class IsStartup(BasePermission):
 
         role = getattr(user, "role", None)
         if role is not None:
-            role_name = getattr(role, "role", None) or (role if isinstance(role, str) else None)
+            role_name = getattr(role, "role", None) or (
+                role if isinstance(role, str) else None
+            )
             if role_name and str(role_name).lower() == "startup":
                 return True
 
         return False
-
