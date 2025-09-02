@@ -5,7 +5,11 @@ import { useNavigate } from "react-router-dom";
 
 export function useSignUpMutate() {
   const navigate = useNavigate();
-  return useMutation<SignUpResponse, AxiosError, SignUpData>({
+  return useMutation<
+    SignUpResponse,
+    AxiosError,
+    SignUpData
+  >({
     mutationFn: signUp,
     onSuccess: () => {
       navigate("/signin");
@@ -16,7 +20,7 @@ export function useSignUpMutate() {
         throw new Error("Серверна помилка, спробуйте пізніше");
       }
       if (error.response?.data) {
-        throw error.response?.data;
+        throw error.response?.data
       }
       throw new Error(
         "Електронна пошта чи пароль вказані некоректно. Спробуйте ще раз."
