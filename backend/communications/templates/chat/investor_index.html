@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Conversations</title>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6"></script>
+</head>
+<body>
+
+<div style="text-align: right; margin-bottom: 1rem;">
+  <button id="logout-btn">Logout</button>
+</div>
+
+<div id="main-container">
+  <h1>Choose a Startup to start conversation with:</h1>
+
+  {% load chat_extras %}
+  <ul>
+    {% for s in startups %}
+    <li>
+      {{ s.first_name }} {{ s.last_name }}
+      {% if s.id|stringformat:"s" in rooms.keys %}
+      <button
+          hx-get="{% url 'room' rooms|get_room_id:s.id %}"
+          hx-target="#main-container"
+          hx-push-url="true"
+          hx-swap="innerHTML">
+        Continue conversation
+      </button>
+      {% else %}
+      <button
+          hx-get="{% url 'start-conversation' s.id %}"
+          hx-target="#main-container"
+          hx-push-url="true"
+          hx-swap="innerHTML">
+        Start conversation
+      </button>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<script>
+  // Grab CSRF token from cookie
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    const refresh = localStorage.getItem('refresh');
+    const access = localStorage.getItem('access');
+
+    if (!refresh) {
+      alert('No refresh token found. You may already be logged out.');
+      window.location.href = '/login/';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/logout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + access,
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ refresh }),
+        credentials: 'include', // send cookies like csrftoken if needed
+      });
+
+      if (response.ok) {
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+        window.location.href = '/login/';
+      } else {
+        const data = await response.json();
+        alert('Logout failed: ' + (data.error || data.detail || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Logout error: ' + err.message);
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+<h2>Startups</h2>
+<ul>
+  {% for startup in startups %}
+    <li>
+      {{ startup.first_name }} {{ startup.last_name }}
+      <a hx-get="{% url 'room' rooms|get_room_id:startup.id %}"
+         hx-target="#main-content"
+         hx-swap="innerHTML"
+         hx-push-url="true">
+         Chat
+      </a>
+    </li>
+  {% endfor %}
+</ul>

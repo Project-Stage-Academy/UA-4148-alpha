@@ -1,0 +1,13 @@
+<h2>Your Conversations</h2>
+<ul>
+  {% for room in rooms %}
+    <li>
+      <a hx-get="{% url 'room' room.id %}"
+         hx-target="#main-content"
+         hx-swap="innerHTML"
+         hx-push-url="true">
+        {{ room.name }}
+      </a>
+    </li>
+  {% endfor %}
+</ul>

@@ -1,0 +1,6 @@
+{% load tz %}
+<div class="message">
+  <strong>{{ m.sender_first_name }} {{ m.sender_last_name }}</strong>:
+  {{ m.text }}
+  <small>({{ m.timestamp|localtime|date:"H:i" }})</small>
+</div>
