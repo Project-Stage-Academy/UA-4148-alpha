@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from faker import Faker
 
 from profiles.models import Industry, InvestorProfile, Location, StartupProfile
-from projects.models import SavedProject, StartupProject
+from projects.models import ProjectStatus, SavedStartup, StartupProject
 from users.models import UserProfile, UserRole
 
 
@@ -132,7 +132,7 @@ class Command(BaseCommand):
             self.stdout.write("Clearing existing data...")
             try:
                 # Delete dependent data in safe order
-                SavedProject.objects.all().delete()
+                SavedStartup.objects.all().delete()
                 StartupProject.objects.all().delete()
                 StartupProfile.objects.all().delete()
                 InvestorProfile.objects.all().delete()
@@ -142,6 +142,7 @@ class Command(BaseCommand):
                 # Base lookup tables
                 Industry.objects.all().delete()
                 Location.objects.all().delete()
+                ProjectStatus.objects.all().delete()
                 self.stdout.write(self.style.SUCCESS("Existing data cleared."))
             except Exception as e:
                 self.stdout.write(
@@ -170,11 +171,14 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"Roles ready: {len(roles)} roles available.")
         )
 
-        # Seed base lookup tables: Industry, Location
+        # Seed base lookup tables: ProjectStatus, Industry, Location
         self.stdout.write("Seeding base lookup tables...")
+        status_values = [value for value, _ in ProjectStatus.STATUS_CHOICES]
         industry_values = [value for value, _ in Industry.INDUSTRY_CHOICES]
         location_values = [value for value, _ in Location.LOCATION_CHOICES]
 
+        for status in status_values:
+            ProjectStatus.objects.get_or_create(status=status)
         for name in industry_values:
             Industry.objects.get_or_create(name=name)
         for name in location_values:
@@ -298,6 +302,7 @@ class Command(BaseCommand):
             self.stdout.write("Creating startup projects (1 per startup)...")
             num_projects = len(startup_profiles)
 
+        statuses = list(ProjectStatus.objects.all())
         projects_created = 0
 
         # Distribute projects among startups
@@ -320,7 +325,13 @@ class Command(BaseCommand):
                         website=fake.url(),
                         investment_needed=random.choice([True, False]),
                         views_count=random.randint(0, 10000),
+                        status=random.choice(statuses) if statuses else None,
                         startup=startup,
+                        investor=(
+                            random.choice(investor_profiles)
+                            if investor_profiles and random.random() < 0.5
+                            else None
+                        ),
                     )
                     projects_created += 1
                 except Exception as e:
@@ -353,10 +364,10 @@ class Command(BaseCommand):
                 random.shuffle(available_startups)
 
                 for startup in available_startups[:saved_for_this_investor]:
-                    if not SavedProject.objects.filter(
-                        investor=investor, project=startup
+                    if not SavedStartup.objects.filter(
+                        investor=investor, startup=startup
                     ).exists():
-                        SavedProject.objects.create(investor=investor, project=startup)
+                        SavedStartup.objects.create(investor=investor, startup=startup)
                         saved_created += 1
 
                         if saved_created >= num_saved:
@@ -372,10 +383,10 @@ class Command(BaseCommand):
                 for startup in random.sample(
                     startup_profiles, k=min(len(startup_profiles), random.randint(0, 3))
                 ):
-                    if not SavedProject.objects.filter(
-                        investor=investor, project=project
+                    if not SavedStartup.objects.filter(
+                        investor=investor, startup=startup
                     ).exists():
-                        SavedProject.objects.create(investor=investor, project=project)
+                        SavedStartup.objects.create(investor=investor, startup=startup)
                         saved_created += 1
 
         self.stdout.write(
@@ -388,7 +399,7 @@ class Command(BaseCommand):
         total_investors = InvestorProfile.objects.count()
         total_startups = StartupProfile.objects.count()
         total_projects = StartupProject.objects.count()
-        total_saved = SavedProject.objects.count()
+        total_saved = SavedStartup.objects.count()
 
         self.stdout.write(
             self.style.SUCCESS(
