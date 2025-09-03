@@ -4,12 +4,15 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import F
+from django.db import transaction
+
+from profiles.models import InvestorProfile
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from .serializers import ProjectSerializer, SubscriptionSerializer
 from .models import StartupProject, Subscription, ProjectRevision
-from .permissions import IsInvestor
+from .permissions import IsInvestor, IsStartup
 
 # Get logger for this module
 logger = logging.getLogger(__name__)
@@ -22,7 +25,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
 
+    def get_permissions(self):
+        if self.action in ["create"]:
+            permission_classes = [IsAuthenticated, IsStartup]
+        elif self.action in ["list", "retrieve", "save", "unsave"]:
+            permission_classes = [IsAuthenticated, IsInvestor]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """Creation a project is automatically link it to a startup"""
+        startup_profile = getattr(self.request.user, "startupprofile", None)
+        if not startup_profile:
+            raise Exception("Startup profile not found for this user.")
+        serializer.save(startup=startup_profile)
+
     def list(self, request, *args, **kwargs):
+      """Viewing projects by investors"""
+
         logger.info(f"Project list request from user ID: {request.user.id}")
         try:
             queryset = self.get_queryset().order_by("-created_at")
@@ -45,6 +66,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         logger.info(
             f"Project retrieve request from user ID: {request.user.id} for project ID: {kwargs.get('pk')}"
         )
+
         try:
             project = self.get_object()
 
@@ -69,13 +91,78 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    # Follow for saving projects by investor
+    @action(detail=True, methods=["post"], url_path="save")
+    def save(self, request, pk=None):
+        """
+        POST  /api/startups/{pk}/save/
+        Allow an authenticated investor to follow (save) a startup project.
+        """
+
+        investor_profile = getattr(request.user, "investorprofile", None)
+        if not investor_profile:
+            return Response(
+                {"error": "Investor profile not found for this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        project = self.get_object()
+
+        # Prevent duplicates
+        if investor_profile.saved_projects.filter(pk=project.pk).exists():
+            serializer = ProjectSerializer(project)
+            return Response(
+                {"message": "Project is already saved.", "project": serializer.data},
+                status=status.HTTP_200_OK,
+            )
+
+        # Atomic transaction to ensure database integrity
+        with transaction.atomic():
+            investor_profile.saved_projects.add(project)
+
+        serializer = ProjectSerializer(project)
+
+        return Response(
+            {
+                "message": f"Project {project.id} has been saved to your profile.",
+                "project": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    # Unfollow" to remove a project from saved
+    @action(detail=True, methods=["post"], url_path="unsave")
+    def unsave(self, request, pk=None):
+        """Allow an authenticated investor to unfollow (remove) a startup project."""
+
+        investor_profile = getattr(request.user, "investorprofile", None)
+        if not investor_profile:
+            return Response(
+                {"error": "Investor profile not found for this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        project = self.get_object()
+
+        # Atomic transaction to ensure database integrity
+        with transaction.atomic():
+            investor_profile.saved_projects.remove(project)
+
+        serializer = ProjectSerializer(project)
+
+        return Response(
+            {
+                "message": f"Project {project.id} has been removed from your saved list.",
+                "project": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
         logger.info(
             f"Project subscription request from user ID: {request.user.id} for project ID: {pk}"
         )
         try:
-            project = StartupProject.objects.get(pk=pk)
+            project = self.get_object()
         except StartupProject.DoesNotExist:
             logger.warning(
                 f"Project subscription failed: project ID {pk} not found for user ID: {request.user.id}"

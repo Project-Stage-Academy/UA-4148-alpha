@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSignInMutate } from "@/hooks/useSignInMutate";
 import { useAuthContext } from "@/hooks/useAuthContext";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const signInSchema = z.object({
   email: z
@@ -18,6 +19,7 @@ const signInSchema = z.object({
 export type SignInFormValues = z.infer<typeof signInSchema>;
 
 export function SignIn() {
+  const navigate = useNavigate();
   const auth = useAuthContext();
   const signIn = useSignInMutate();
   const form = useForm<SignInFormValues>({
@@ -31,7 +33,7 @@ export function SignIn() {
 
   useEffect(() => {
     if (auth?.user) {
-      // TODO: navigate to user profile or dashboard when route available
+      navigate("/enterprises-and-industries");
     }
   }, [auth?.user]);
 
