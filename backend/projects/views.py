@@ -23,9 +23,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsInvestor]
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
-    
+
     # Filters for base List
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     search_fields = ["subject", "idea", "description"]
     ordering_fields = ["created_at", "views_count", "funding_goal"]
 
@@ -122,7 +126,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             investor_profile.saved_projects.remove(project)
 
         serializer = ProjectSerializer(project)
-        
+
         if request.method == "DELETE":
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
@@ -207,33 +211,38 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class SavedProjectsList(generics.ListAPIView):
     """
     GET /api/investor/saved-projects/
     Forms a list of projects that the current investor has saved.
     - search: GET /api/investor/saved-projects/?search=AI;
     - ordering: GET /api/investor/saved-projects/?ordering=funding_goal.
-    
+
     Requires authentication and investor role.
     Response: JSON list of saved projects.
     """
-    
+
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated, IsInvestor]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     search_fields = ["subject", "idea", "description"]
     ordering_fields = ["created_at", "views_count", "funding_goal"]
     ordering = ["-created_at"]
-    
+
     def get_queryset(self):
         user = self.request.user
         investor_profile = getattr(user, "investorprofile", None)
-        
+
         if not investor_profile:
             raise PermissionDenied("Investor profile not found for this user.")
-        
+
         if not getattr(investor_profile, "is_active", True):
             raise PermissionDenied("Account of user is not active.")
-        
-        return investor_profile.saved_projects.all()                       
+
+        return investor_profile.saved_projects.all()

@@ -72,7 +72,6 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-
 }
 
 SIMPLE_JWT = {
