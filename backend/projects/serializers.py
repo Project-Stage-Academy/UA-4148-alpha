@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import StartupProject, Subscription
-
+from decimal import Decimal
 
 class ProjectSerializer(serializers.ModelSerializer):
     """
@@ -12,14 +12,16 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     status = serializers.CharField(read_only=True)
     startup_name = serializers.CharField(source="startup.company_name", read_only=True)
-    investor_name = serializers.CharField(
-        source="investor.company_name", read_only=True, default=None
-    )
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    # investor_name = serializers.CharField(
+    #      source="investor.company_name", read_only=True, default=None
+    #  )
 
     class Meta:
         model = StartupProject
         fields = [
             "id",
+            "owner",
             "subject",
             "idea",
             "description",
@@ -29,8 +31,10 @@ class ProjectSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "status",
+            "startup",
             "startup_name",
-            "investor_name",
+            "funding_goal",
+            
         ]
 
     def validate_subject(self, value):
@@ -47,13 +51,19 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    project = serializers.PrimaryKeyRelatedField(read_only=True)
+    # project field is not read_only
+
     class Meta:
         model = Subscription
         fields = ["id", "project", "share"]
 
     def validate(self, data):
-        project = data["project"]
-        share = data["share"]
+        project = self.instance.project if self.instance else self.context.get("project")
+        if not project:
+            raise serializers.ValidationError("Project must be provided.")
+
+        share = Decimal(data["share"])
 
         if not hasattr(project, "funding_goal") or project.funding_goal is None:
             raise serializers.ValidationError("This project has no funding goal set.")

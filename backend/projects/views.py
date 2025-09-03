@@ -1,23 +1,37 @@
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import F
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-
+from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import ProjectSerializer, SubscriptionSerializer
 from .models import StartupProject, Subscription, ProjectRevision
-from .permissions import IsInvestor
+from .permissions import IsStartup
+from django.shortcuts import get_object_or_404
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     """ViewSet for listing, retrieving, and subscribing to projects."""
 
-    permission_classes = [IsAuthenticated, IsInvestor]
+    permission_classes = [IsAuthenticated]
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
 
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["subject"]
+    search_fields = ["subject"]
+    
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+        
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by("-created_at")
         serializer = self.get_serializer(queryset, many=True)
@@ -37,38 +51,32 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
-        try:
-            project = StartupProject.objects.get(pk=pk)
-        except StartupProject.DoesNotExist:
-            return Response(
-                {"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+        project = get_object_or_404(StartupProject, pk=pk)
 
-        serializer = SubscriptionSerializer(data=request.data)
+        try:
+            from profiles.models import InvestorProfile
+            investor = InvestorProfile.objects.get(user=request.user)
+        except InvestorProfile.DoesNotExist:
+            return Response({"error": "User is not an investor."}, status=status.HTTP_403_FORBIDDEN)
+
+        if Subscription.objects.filter(project=project, investor=investor).exists():
+            return Response({"error": "Already subscribed"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = SubscriptionSerializer(data=request.data, context={"project": project})
         if serializer.is_valid():
             share = serializer.validated_data["share"]
 
             if project.funding_goal is None:
-                return Response(
-                    {"error": "Project has no funding goal set."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
+                return Response({"error": "Project has no funding goal set."}, status=status.HTTP_400_BAD_REQUEST)
             if project.remaining_funding() < share:
-                return Response(
-                    {"error": "Funding goal exceeded"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                return Response({"error": "Funding goal exceeded"}, status=status.HTTP_400_BAD_REQUEST)
 
-            subscription = serializer.save(
-                investor=request.user.investorprofile, project=project
-            )
-            return Response(
-                SubscriptionSerializer(subscription).data,
-                status=status.HTTP_201_CREATED,
-            )
+            subscription = serializer.save(investor=investor, project=project)
+            return Response(SubscriptionSerializer(subscription).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
     @action(detail=True, methods=["post"])
     def update_project(self, request, pk=None):
