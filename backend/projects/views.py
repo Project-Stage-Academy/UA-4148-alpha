@@ -1,9 +1,12 @@
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, generics, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied, NotFound
 from django.db.models import F
 from django.db import transaction
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from profiles.models import InvestorProfile
 from asgiref.sync import async_to_sync
@@ -20,6 +23,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsInvestor]
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
+    
+    # Filters for base List
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["subject", "idea", "description"]
+    ordering_fields = ["created_at", "views_count", "funding_goal"]
 
     def get_permissions(self):
         if self.action in ["create"]:
