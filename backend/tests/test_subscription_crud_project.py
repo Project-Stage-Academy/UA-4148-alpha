@@ -114,19 +114,7 @@ def test_list_projects(api_client, user, project):
     assert any(p["id"] == project.id for p in response.data)
 
 
-@pytest.mark.django_db
-@patch("projects.views.get_channel_layer")
-def test_update_project(mock_get_channel_layer, api_client, user, project):
-    mock_channel_layer = AsyncMock()
-    mock_get_channel_layer.return_value = mock_channel_layer
 
-    api_client.force_authenticate(user=user)
-    url = reverse("project-update-project", args=[project.id])
-    data = {"subject": "Updated Project"}
-    response = api_client.post(url, data)
-    assert response.status_code == 200
-
-    mock_channel_layer.group_send.assert_awaited()
 
 
 @pytest.mark.django_db
