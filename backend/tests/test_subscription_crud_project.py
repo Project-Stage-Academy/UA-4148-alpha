@@ -114,9 +114,6 @@ def test_list_projects(api_client, user, project):
     assert any(p["id"] == project.id for p in response.data)
 
 
-
-
-
 @pytest.mark.django_db
 def test_delete_project(api_client, user, project):
     api_client.force_authenticate(user=user)
