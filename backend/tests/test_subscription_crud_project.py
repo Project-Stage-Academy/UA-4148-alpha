@@ -118,6 +118,7 @@ def test_update_project(mock_get_channel_layer, api_client, user, project):
     # Optionally assert group_send was called
     mock_channel_layer.group_send.assert_awaited()
 
+
 @pytest.mark.django_db
 def test_delete_project(api_client, user, project):
     api_client.force_authenticate(user=user)
