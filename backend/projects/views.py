@@ -207,3 +207,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class SavedProjectsList(generics.ListAPIView):
+    """
+    GET /api/investor/saved-projects/
+    Forms a list of projects that the current investor has saved.
+    """
+    
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated, IsInvestor]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["subject", "idea", "description"]
+    ordering_fields = ["created_at", "views_count", "funding_goal"]
+    ordering = ["-created_at"]
+    
+    
