@@ -19,12 +19,14 @@ def api_client():
 @pytest.fixture
 def startup_role(db):
     from users.models import UserRole
+
     return UserRole.objects.get_or_create(role="startup")[0]
 
 
 @pytest.fixture
 def investor_role(db):
     from users.models import UserRole
+
     return UserRole.objects.get_or_create(role="investor")[0]
 
 
