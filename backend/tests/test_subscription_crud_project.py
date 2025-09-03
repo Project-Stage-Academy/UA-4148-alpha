@@ -1,4 +1,3 @@
-
 import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -18,21 +17,35 @@ def api_client():
 @pytest.fixture
 def startup_role(db):
     from users.models import UserRole
+
     return UserRole.objects.get_or_create(role="startup")[0]
+
 
 @pytest.fixture
 def investor_role(db):
     from users.models import UserRole
+
     return UserRole.objects.get_or_create(role="investor")[0]
+
 
 @pytest.fixture
 def user(db, startup_role):
-    return User.objects.create_user(username="user1", email="user1@example.com", password="pass1234", role=startup_role)
+    return User.objects.create_user(
+        username="user1",
+        email="user1@example.com",
+        password="pass1234",
+        role=startup_role,
+    )
 
 
 @pytest.fixture
 def user2(db, investor_role):
-    return User.objects.create_user(username="user2", email="user2@example.com", password="pass1234", role=investor_role)
+    return User.objects.create_user(
+        username="user2",
+        email="user2@example.com",
+        password="pass1234",
+        role=investor_role,
+    )
 
 
 @pytest.fixture
@@ -42,8 +55,9 @@ def startup_profile(db, user):
 
 @pytest.fixture
 def investor_profile(db, user2):
-    profile =  InvestorProfile.objects.create(user=user2, company_name="Investor Inc.")
+    profile = InvestorProfile.objects.create(user=user2, company_name="Investor Inc.")
     return profile
+
 
 @pytest.fixture
 def project(db, user, startup_profile):
@@ -113,7 +127,10 @@ def test_subscribe_project(api_client, user2, investor_profile, project):
     response = api_client.post(url, data)
     print("RESPONSE DATA:", response.data)
     assert response.status_code == status.HTTP_201_CREATED
-    assert Subscription.objects.filter(project=project, investor=investor_profile).exists()
+    assert Subscription.objects.filter(
+        project=project, investor=investor_profile
+    ).exists()
+
 
 @pytest.mark.django_db
 def test_duplicate_subscription(api_client, user2, investor_profile, project):

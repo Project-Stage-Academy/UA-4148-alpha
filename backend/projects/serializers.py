@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import StartupProject, Subscription
 from decimal import Decimal
 
+
 class ProjectSerializer(serializers.ModelSerializer):
     """
     Serializer for the StartupProject model.
@@ -34,7 +35,6 @@ class ProjectSerializer(serializers.ModelSerializer):
             "startup",
             "startup_name",
             "funding_goal",
-            
         ]
 
     def validate_subject(self, value):
@@ -59,7 +59,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ["id", "project", "share"]
 
     def validate(self, data):
-        project = self.instance.project if self.instance else self.context.get("project")
+        project = (
+            self.instance.project if self.instance else self.context.get("project")
+        )
         if not project:
             raise serializers.ValidationError("Project must be provided.")
 

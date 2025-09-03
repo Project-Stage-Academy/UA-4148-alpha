@@ -39,11 +39,11 @@ class StartupProject(models.Model):
         null=True,
         blank=True,
     )
-    
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="owned_projects"
+        related_name="owned_projects",
     )
 
     def __str__(self):
@@ -99,9 +99,12 @@ class Subscription(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["investor", "project"], name="unique_investor_project")
+            models.UniqueConstraint(
+                fields=["investor", "project"], name="unique_investor_project"
+            )
         ]
         ordering = ["-created_at"]
+
     def __str__(self):
         return f"{self.investor} -> {self.project} ({self.share})"
 

@@ -21,7 +21,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
     """ViewSet for listing, retrieving, and subscribing to projects."""
 
     permission_classes = [IsAuthenticated]
@@ -31,7 +34,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ["subject"]
     search_fields = ["subject"]
-    
+
     def get_permissions(self):
         if self.action in ["create"]:
             permission_classes = [IsAuthenticated, IsStartup]
@@ -47,13 +50,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
             startup_id = self.request.data.get("startup")
             if startup_id:
                 from .models import StartupProfile
+
                 startup_profile = StartupProfile.objects.get(pk=startup_id)
             else:
                 raise Exception("Startup profile not found for this user.")
         serializer.save(owner=self.request.user, startup=startup_profile)
 
-    
-        
     def list(self, request, *args, **kwargs):
         """Viewing projects by investors"""
         queryset = self.get_queryset().order_by("-created_at")
@@ -143,28 +145,42 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         try:
             from profiles.models import InvestorProfile
+
             investor = InvestorProfile.objects.get(user=request.user)
         except InvestorProfile.DoesNotExist:
-            return Response({"error": "User is not an investor."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "User is not an investor."}, status=status.HTTP_403_FORBIDDEN
+            )
 
         if Subscription.objects.filter(project=project, investor=investor).exists():
-            return Response({"error": "Already subscribed"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Already subscribed"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        serializer = SubscriptionSerializer(data=request.data, context={"project": project})
+        serializer = SubscriptionSerializer(
+            data=request.data, context={"project": project}
+        )
         if serializer.is_valid():
             share = serializer.validated_data["share"]
 
             if project.funding_goal is None:
-                return Response({"error": "Project has no funding goal set."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Project has no funding goal set."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if project.remaining_funding() < share:
-                return Response({"error": "Funding goal exceeded"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Funding goal exceeded"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             subscription = serializer.save(investor=investor, project=project)
-            return Response(SubscriptionSerializer(subscription).data, status=status.HTTP_201_CREATED)
+            return Response(
+                SubscriptionSerializer(subscription).data,
+                status=status.HTTP_201_CREATED,
+            )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
     @action(detail=True, methods=["post"])
     def update_project(self, request, pk=None):
