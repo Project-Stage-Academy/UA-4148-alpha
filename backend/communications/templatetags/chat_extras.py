@@ -10,7 +10,10 @@ def get_other_user(participants, current_user):
     """
     for p in participants:
         if str(p.get("id")) != str(current_user.id):
-            return p.get("username") or p.get("id")
+            first = p.get("first_name", "")
+            last = p.get("last_name", "")
+            full_name = f"{first} {last}".strip()
+            return full_name or p.get("username") or p.get("id")
     return "Unknown"
 
 

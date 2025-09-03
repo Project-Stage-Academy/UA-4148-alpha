@@ -2,193 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat Room</title>
-  <style>
-    #messages {
-      max-height: 400px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    .message {
-      margin-bottom: 0.5rem;
-    }
-    .read-status {
-      margin-left: 0.5em;
-    }
-  </style>
+  <title>Conversation</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
 </head>
 <body
-      data-user-id="{{ user.id }}"
-      data-other-user-id="{{ other_participant.id }}"
-      data-room-id="{{ room.id }}">
-  <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-    <button id="go-back-btn">← Back to Conversations</button>
-    <button id="logout-btn">Logout</button>
-  </div>
+  id="chat-root"
+  data-user-id="{{ user.id }}"
+  data-other-user-id="{{ other_participant.id }}"
+  data-room-id="{{ room.id }}">
 
   <h2>Conversation with {{ other_participant.first_name }} {{ other_participant.last_name }}</h2>
 
-  <div id="messages">
-    {% for message in messages %}
-      <div class="message"
-           data-message-id="{{ message.id }}"
-           data-sender-id="{{ message.sender_id }}">
-        <strong>{{ message.sender_first_name }} {{ message.sender_last_name }}</strong>
-        <em style="font-size: 0.8em;">({{ message.timestamp|date:"M d, Y H:i" }})</em>
-        : {{ message.text }}
-        {% if message.sender_id == user.id %}
-          <span class="read-status">
-            {% if message.is_read %}✅{% else %}🕓{% endif %}
-          </span>
-        {% endif %}
-      </div>
-    {% endfor %}
+  <div class="button-bar">
+    <button id="go-back-btn" class="button">← Back to Conversations</button>
+  </div>
+
+  <div id="messages" data-offset="0" data-loading="true">
   </div>
 
   <form id="message-form">
     <textarea id="message-input" rows="2" placeholder="Type a message..." required autocomplete="off"></textarea>
-    <button type="submit">Send</button>
+    <button type="submit" class="button">Send</button>
   </form>
 
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const chatRoot = document.body;
-    const userId = chatRoot.dataset.userId;
-    const otherUserId = chatRoot.dataset.otherUserId;
-    const roomId = chatRoot.dataset.roomId;
-
-    const messagesContainer = document.getElementById("messages");
-    const messageForm = document.getElementById("message-form");
-    const messageInput = document.getElementById("message-input");
-
-    const accessToken = localStorage.getItem("access");
-    if (!accessToken) {
-      alert("No access token found, please login.");
-      window.location.href = "/login/";
-      return;
-    }
-
-    const socket = new WebSocket(`wss://${window.location.host}/ws/chat/${otherUserId}/?token=${accessToken}`);
-
-    let offset = {{ messages|length }};
-
-    socket.onopen = () => console.log("WebSocket connected");
-    socket.onclose = () => console.warn("WebSocket closed");
-    socket.onerror = err => console.error("WebSocket error", err);
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === "message") {
-        insertMessage(data);
-      } else if (data.type === "read") {
-        data.message_ids.forEach(msgId => {
-          const readEl = document.querySelector(`.message[data-message-id="${msgId}"] .read-status`);
-          if (readEl) readEl.textContent = "✅";
-        });
-      } else if (data.type === "history" && data.messages.length > 0) {
-        const prevScrollHeight = messagesContainer.scrollHeight;
-
-        data.messages.forEach(msg => {
-          const div = document.createElement("div");
-          div.className = "message";
-          div.dataset.messageId = msg.id;
-          div.dataset.senderId = msg.sender_id;
-
-          let readStatus = '';
-          if (msg.sender_id === userId) {
-            readStatus = `<span class="read-status">${msg.is_read ? '✅' : '🕓'}</span>`;
-          }
-
-          const timestamp = new Date(msg.timestamp).toLocaleString();
-          div.innerHTML = `<strong>${msg.first_name} ${msg.last_name}</strong>
-                           <em style="font-size: 0.8em;">(${timestamp})</em>
-                           : ${msg.text} ${readStatus}`;
-
-          messagesContainer.prepend(div);
-        });
-
-        offset += data.messages.length;
-
-        messagesContainer.scrollTop = messagesContainer.scrollHeight - prevScrollHeight;
-        messagesContainer.dataset.loading = "";
-      }
-    };
-
-    messageForm.addEventListener("submit", e => {
-      e.preventDefault();
-      const text = messageInput.value.trim();
-      if (!text || socket.readyState !== WebSocket.OPEN) return;
-
-      socket.send(JSON.stringify({
-        type: "message",
-        message: text
-      }));
-
-      messageInput.value = "";
-    });
-
-    function insertMessage(message) {
-      const div = document.createElement("div");
-      div.className = "message";
-      div.dataset.messageId = message.id;
-      div.dataset.senderId = message.sender_id;
-
-      let readStatus = '';
-      if (message.sender_id === userId) {
-        readStatus = `<span class="read-status">${message.is_read ? '✅' : '🕓'}</span>`;
-      }
-
-      const timestamp = new Date(message.timestamp).toLocaleString();
-      div.innerHTML = `<strong>${message.first_name} ${message.last_name}</strong>
-                       <em style="font-size: 0.8em;">(${timestamp})</em>
-                       : ${message.text} ${readStatus}`;
-
-      messagesContainer.appendChild(div);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    function markVisibleMessagesAsRead() {
-      const unreadEls = document.querySelectorAll(`.message[data-sender-id="${otherUserId}"]:not([data-read="true"])`);
-      const unreadIds = Array.from(unreadEls).map(el => {
-        el.dataset.read = "true";
-        return el.dataset.messageId;
-      });
-
-      if (unreadIds.length && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: "read",
-          message_ids: unreadIds
-        }));
-      }
-    }
-
-    messagesContainer.addEventListener("scroll", () => {
-      if (messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 10) {
-        markVisibleMessagesAsRead();
-      }
-      if (messagesContainer.scrollTop === 0 && !messagesContainer.dataset.loading) {
-        messagesContainer.dataset.loading = "true";
-        socket.send(JSON.stringify({
-          type: "history",
-          offset: offset
-        }));
-      }
-    });
-
-    setTimeout(markVisibleMessagesAsRead, 1000);
-
-    document.getElementById("go-back-btn").addEventListener("click", () => {
-      window.location.href = "/chat/";
-    });
-    document.getElementById("logout-btn").addEventListener("click", () => {
-      localStorage.removeItem("access");
-      localStorage.removeItem("refresh");
-      window.location.href = "/login/";
-    });
-  });
-  </script>
+<script type="module" src="{% static 'js/chat-room.js' %}"></script>
 </body>
 </html>

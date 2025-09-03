@@ -1,0 +1,142 @@
+import { escapeHTML, renderMessage } from './chat-utils.js';
+
+let socket = null;
+let readThrottleTimeout = null;
+
+function scrollBottom(container) {
+  container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+}
+
+function cleanupChat() {
+  if (socket) {
+    socket.close(1000, "Cleanup");
+    socket = null;
+  }
+}
+
+function initChatRoom() {
+  cleanupChat();
+
+  const chatRoot = document.getElementById("chat-root");
+    if (!chatRoot) return;
+
+  const userId = chatRoot.dataset.userId;
+  const otherUserId = chatRoot.dataset.otherUserId;
+
+  const messagesContainer = document.getElementById("messages");
+  const messageForm = document.getElementById("message-form");
+  const messageInput = document.getElementById("message-input");
+  const goBackBtn = document.getElementById("go-back-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  if (!messagesContainer || !messageForm || !messageInput) return;
+
+  goBackBtn?.addEventListener("click", () => window.location.href = "/chat/");
+  logoutBtn?.addEventListener("click", () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    window.location.href = "/chat/login/";
+  });
+
+  const accessToken = localStorage.getItem("access");
+  if (!accessToken) {
+    alert("No access token found.");
+    window.location.href = "/chat/login/";
+    return;
+  }
+
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  socket = new WebSocket(`${protocol}://${window.location.host}/ws/chat/${otherUserId}/?token=${accessToken}`);
+
+  let offset = parseInt(messagesContainer.dataset.offset || "0");
+
+  socket.onopen = () => {
+    console.log("🔌 WS connected");
+    socket.send(JSON.stringify({ type: "history", offset: 0 }));
+//    scrollBottom(messagesContainer);
+    markVisibleMessagesAsRead();
+    messageInput.focus();
+  };
+
+  socket.onclose = (event) => {
+      if (event.code !== 1000) {
+        console.warn("🔌 WS closed unexpectedly. Reconnecting in 2s");
+        setTimeout(initChatRoom, 2000);
+      }
+  };
+  socket.onerror = err => console.error("🔌 WS error", err);
+
+  socket.onmessage = event => {
+    const data = JSON.parse(event.data);
+    console.log("🔥 WS message received:", data);
+
+    if (data.type === "message") {
+      messagesContainer.appendChild(renderMessage(data, userId));
+      scrollBottom(messagesContainer);
+      markVisibleMessagesAsRead();
+    }
+
+    if (data.type === "read") {
+      data.message_ids.forEach(msgId => {
+        const el = document.querySelector(`.message[data-message-id="${msgId}"] .read-status`);
+        if (el) el.textContent = "✅";
+      });
+    }
+
+    if (data.type === "history" && data.messages.length) {
+      const prevHeight = messagesContainer.scrollHeight;
+      const frag = document.createDocumentFragment();
+      data.messages.forEach(msg => frag.appendChild(renderMessage(msg, userId)));
+      messagesContainer.prepend(frag);
+      offset += data.messages.length;
+      messagesContainer.dataset.offset = offset;
+      messagesContainer.scrollTop = messagesContainer.scrollHeight - prevHeight;
+      messagesContainer.dataset.loading = "";
+    }
+  };
+
+  messageForm.onsubmit = e => {
+    e.preventDefault();
+    const text = messageInput.value.trim();
+    if (!text || socket.readyState !== WebSocket.OPEN) return;
+
+    socket.send(JSON.stringify({ type:"message", message:text }));
+
+    messageInput.value = "";
+    messageInput.focus();
+  };
+
+  messageInput.onkeydown = e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      messageForm.requestSubmit();
+    }
+  };
+
+  function markVisibleMessagesAsRead() {
+    if (readThrottleTimeout) clearTimeout(readThrottleTimeout);
+    readThrottleTimeout = setTimeout(() => {
+      const unreadEls = document.querySelectorAll(`.message[data-sender-id="${otherUserId}"]:not([data-read="true"])`);
+      const unreadIds = Array.from(unreadEls).map(el => { el.dataset.read = "true"; return el.dataset.messageId; });
+      if (unreadIds.length && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type:"read", message_ids:unreadIds }));
+      }
+    }, 200);
+  }
+
+  messagesContainer.addEventListener("scroll", () => {
+    if (messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 5) markVisibleMessagesAsRead();
+    if (messagesContainer.scrollTop === 0 && !messagesContainer.dataset.loading) {
+      messagesContainer.dataset.loading = "true";
+      socket.send(JSON.stringify({ type:"history", offset:offset }));
+    }
+  });
+
+  setTimeout(markVisibleMessagesAsRead, 500);
+//
+//  if (socket && socket.readyState === WebSocket.OPEN) {
+//      socket.send(JSON.stringify({ type: "history", offset: 0 }));
+//  };
+}
+
+document.addEventListener("DOMContentLoaded", initChatRoom);
