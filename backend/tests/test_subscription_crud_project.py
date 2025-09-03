@@ -62,15 +62,28 @@ def investor_profile(db, user2):
 
 @pytest.fixture
 def project(db, user, startup_profile):
-    # Вказуємо owner, бо поле NOT NULL
     return StartupProject.objects.create(
         subject="Test Project",
         idea="Some idea",
         description="Description",
-        owner=user,  # обов’язково
+        owner=user,
         startup=startup_profile,
         investment_needed=True,
         funding_goal=Decimal("100000.00"),
+    )
+
+
+# Фікстура для старого проекту, який використовується у ревізіях
+@pytest.fixture
+def old_project(db, user, startup_profile):
+    return StartupProject.objects.create(
+        subject="Old Project",
+        idea="Old Idea",
+        description="Old description",
+        owner=user,  # обов'язково вказуємо owner
+        startup=startup_profile,
+        investment_needed=True,
+        funding_goal=Decimal("50000.00"),
     )
 
 
