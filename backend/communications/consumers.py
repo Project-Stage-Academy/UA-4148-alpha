@@ -38,8 +38,8 @@ def get_message_history(room, offset=0, limit=50):
         {
             "id": str(msg.id),
             "sender_id": msg.sender_id,
-            "first_name": msg.sender_first_name,
-            "last_name": msg.sender_last_name,
+            "sender_first_name": msg.sender_first_name,
+            "sender_last_name": msg.sender_last_name,
             "text": msg.text,
             "timestamp": msg.timestamp.isoformat(),
             "is_read": msg.is_read,
@@ -103,8 +103,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
-        messages = await get_message_history(self.room)
-        await self.send(text_data=json.dumps({"type": "history", "messages": messages}))
 
     async def disconnect(self, close_code):
         """
@@ -158,6 +156,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if msg_type == "history":
             offset = max(int(data.get("offset", 0)), 0)
             messages = await get_message_history(self.room, offset=offset)
+            print("Sending history to", self.user.id, "with", len(messages), "messages")
             await self.send(
                 text_data=json.dumps({"type": "history", "messages": messages})
             )
