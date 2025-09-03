@@ -101,10 +101,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    # Unfollow" to remove a project from saved
-    @action(detail=True, methods=["post"], url_path="unsave")
+    # Unfollow / delete to remove a project from saved
+    @action(detail=True, methods=["post", "delete"], url_path="unsave")
     def unsave(self, request, pk=None):
-        """Allow an authenticated investor to unfollow (remove) a startup project."""
+        """
+        Allow an authenticated investor to unfollow (remove) a startup project.
+        supports POST /api/projects/{pk}/unsave/ and DELETE /api/projects/{pk}/unsave/
+        """
 
         investor_profile = getattr(request.user, "investorprofile", None)
         if not investor_profile:
@@ -119,7 +122,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
             investor_profile.saved_projects.remove(project)
 
         serializer = ProjectSerializer(project)
-
+        
+        if request.method == "DELETE":
+            return Repsonse(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {
                 "message": f"Project {project.id} has been removed from your saved list.",
