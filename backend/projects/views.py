@@ -3,6 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import F
+from django.db import transaction
+
+from profiles.models import InvestorProfile
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -29,10 +32,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
     filterset_fields = ["subject"]
     search_fields = ["subject"]
     
+    def get_permissions(self):
+        if self.action in ["create"]:
+            permission_classes = [IsAuthenticated, IsStartup]
+        elif self.action in ["list", "retrieve", "save", "unsave"]:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        """Creation a project is automatically link it to a startup"""
+        startup_profile = getattr(self.request.user, "startupprofile", None)
+        if not startup_profile:
+            raise Exception("Startup profile not found for this user.")
+        serializer.save(startup=startup_profile)
+    
         
     def list(self, request, *args, **kwargs):
+        """Viewing projects by investors"""
         queryset = self.get_queryset().order_by("-created_at")
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -45,9 +63,74 @@ class ProjectViewSet(viewsets.ModelViewSet):
             views_count=F("views_count") + 1
         )
         project.refresh_from_db(fields=["views_count"])
-
         serializer = self.get_serializer(project)
+
         return Response(serializer.data)
+
+    # Follow for saving projects by investor
+    @action(detail=True, methods=["post"], url_path="save")
+    def save(self, request, pk=None):
+        """
+        POST  /api/startups/{pk}/save/
+        Allow an authenticated investor to follow (save) a startup project.
+        """
+
+        investor_profile = getattr(request.user, "investorprofile", None)
+        if not investor_profile:
+            return Response(
+                {"error": "Investor profile not found for this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        project = self.get_object()
+
+        # Prevent duplicates
+        if investor_profile.saved_projects.filter(pk=project.pk).exists():
+            serializer = ProjectSerializer(project)
+            return Response(
+                {"message": "Project is already saved.", "project": serializer.data},
+                status=status.HTTP_200_OK,
+            )
+
+        # Atomic transaction to ensure database integrity
+        with transaction.atomic():
+            investor_profile.saved_projects.add(project)
+
+        serializer = ProjectSerializer(project)
+
+        return Response(
+            {
+                "message": f"Project {project.id} has been saved to your profile.",
+                "project": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    # Unfollow" to remove a project from saved
+    @action(detail=True, methods=["post"], url_path="unsave")
+    def unsave(self, request, pk=None):
+        """Allow an authenticated investor to unfollow (remove) a startup project."""
+
+        investor_profile = getattr(request.user, "investorprofile", None)
+        if not investor_profile:
+            return Response(
+                {"error": "Investor profile not found for this user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        project = self.get_object()
+
+        # Atomic transaction to ensure database integrity
+        with transaction.atomic():
+            investor_profile.saved_projects.remove(project)
+
+        serializer = ProjectSerializer(project)
+
+        return Response(
+            {
+                "message": f"Project {project.id} has been removed from your saved list.",
+                "project": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):

@@ -24,9 +24,8 @@ class IsInvestor(BasePermission):
                 return True
 
         return False
-    
-    
-    
+
+
 class IsStartup(BasePermission):
     message = "User must be a startup."
 
@@ -35,6 +34,7 @@ class IsStartup(BasePermission):
         if not user or not user.is_authenticated:
             return False
 
+        # Checking for startupprofile
         if hasattr(user, "startupprofile"):
             try:
                 return user.startupprofile is not None
