@@ -1,7 +1,6 @@
 import { escapeHTML, renderMessage } from './chat-utils.js';
 
 let socket = null;
-let readThrottleTimeout = null;
 
 function scrollBottom(container) {
   container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
@@ -15,6 +14,7 @@ function cleanupChat() {
 }
 
 function initChatRoom() {
+  console.log("💬 initChatRoom called");
   cleanupChat();
 
   const chatRoot = document.getElementById("chat-root");
@@ -52,13 +52,21 @@ function initChatRoom() {
 
   socket.onopen = () => {
     console.log("🔌 WS connected");
-    socket.send(JSON.stringify({ type: "history", offset: 0 }));
-//    scrollBottom(messagesContainer);
+    console.log("📡 WS opened - sending history request");
+    messagesContainer.dataset.loading = "true";
+    socket.send(JSON.stringify({ type: "history", offset }));
     markVisibleMessagesAsRead();
     messageInput.focus();
   };
 
   socket.onclose = (event) => {
+      console.warn("🔌 WS closed", event.code, event.reason);
+      if (event.reason.includes("Invalid") || event.reason.includes("expired")) {
+        alert("Session expired. Please log in again.");
+        window.location.href = "/chat/login/";
+        return;
+      }
+
       if (event.code !== 1000) {
         console.warn("🔌 WS closed unexpectedly. Reconnecting in 2s");
         setTimeout(initChatRoom, 2000);
@@ -68,7 +76,6 @@ function initChatRoom() {
 
   socket.onmessage = event => {
     const data = JSON.parse(event.data);
-    console.log("🔥 WS message received:", data);
 
     if (data.type === "message") {
       messagesContainer.appendChild(renderMessage(data, userId));
@@ -88,6 +95,7 @@ function initChatRoom() {
       const frag = document.createDocumentFragment();
       data.messages.forEach(msg => frag.appendChild(renderMessage(msg, userId)));
       messagesContainer.prepend(frag);
+
       offset += data.messages.length;
       messagesContainer.dataset.offset = offset;
       messagesContainer.scrollTop = messagesContainer.scrollHeight - prevHeight;
@@ -114,29 +122,15 @@ function initChatRoom() {
   };
 
   function markVisibleMessagesAsRead() {
-    if (readThrottleTimeout) clearTimeout(readThrottleTimeout);
-    readThrottleTimeout = setTimeout(() => {
       const unreadEls = document.querySelectorAll(`.message[data-sender-id="${otherUserId}"]:not([data-read="true"])`);
-      const unreadIds = Array.from(unreadEls).map(el => { el.dataset.read = "true"; return el.dataset.messageId; });
+      const unreadIds = Array.from(unreadEls).map(el => {
+        el.dataset.read = "true";
+        return el.dataset.messageId;
+      });
       if (unreadIds.length && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type:"read", message_ids:unreadIds }));
+        socket.send(JSON.stringify({ type: "read", message_ids: unreadIds }));
       }
-    }, 200);
   }
-
-  messagesContainer.addEventListener("scroll", () => {
-    if (messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 5) markVisibleMessagesAsRead();
-    if (messagesContainer.scrollTop === 0 && !messagesContainer.dataset.loading) {
-      messagesContainer.dataset.loading = "true";
-      socket.send(JSON.stringify({ type:"history", offset:offset }));
-    }
-  });
-
-  setTimeout(markVisibleMessagesAsRead, 500);
-//
-//  if (socket && socket.readyState === WebSocket.OPEN) {
-//      socket.send(JSON.stringify({ type: "history", offset: 0 }));
-//  };
 }
 
 document.addEventListener("DOMContentLoaded", initChatRoom);

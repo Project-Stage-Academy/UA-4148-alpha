@@ -1,6 +1,7 @@
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, get_user_model, login
+from django.views.decorators.http import require_http_methods
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .mongo_models import Room, Message
@@ -27,13 +28,15 @@ def login_htmx(request):
     refresh = RefreshToken.for_user(user)
     access = str(refresh.access_token)
 
-    return HttpResponse(f"""
+    return HttpResponse(
+        f"""
         <script>
             localStorage.setItem("access", "{access}");
             localStorage.setItem("refresh", "{str(refresh)}");
             window.location.href = "/chat/";
         </script>
-    """)
+    """
+    )
 
 
 def index(request):
@@ -42,6 +45,12 @@ def index(request):
     Investor: lists startups with 'start/continue' buttons.
     Startup: lists existing conversations only.
     """
+    if request.GET.get("force_logout") == "1":
+        from django.contrib.auth import logout
+
+        logout(request)
+        return redirect("login")
+
     user = request.user
     print(f"💡 Authenticated? {user.is_authenticated}, User: {user}")
 
@@ -49,37 +58,38 @@ def index(request):
         return redirect("login")
     if request.GET.get("force_logout") == "1":
         from django.contrib.auth import logout
+
         logout(request)
         return redirect("login")
 
     if user.role.role == "investor":
-        startups = User.objects.filter(role__role="startup")
+        startups = list(User.objects.filter(role__role="startup"))
         rooms = {r.name: r for r in Room.objects(participants__id=str(user.id))}
+
+        def startup_has_room(startup):
+            for room in rooms.values():
+                for p in room.participants:
+                    if str(p.get("id")) == str(startup.id):
+                        return True
+            return False
+
+        startups.sort(key=lambda s: not startup_has_room(s))
     elif user.role.role == "startup":
         rooms = Room.objects(participants__id=str(user.id)).order_by("-updated_at")
     else:
         return HttpResponseForbidden("Unknown role, please contact admin")
 
-    if request.headers.get("HX-Request") == "true":
-        if user.role.role == "investor":
-            return render(request, "chat/investor_index_partial.html", {
+    if user.role.role == "investor":
+        return render(
+            request,
+            "chat/investor_index.html",
+            {
                 "startups": startups,
                 "rooms": rooms,
-            })
-        elif user.role.role == "startup":
-            return render(request, "chat/startup_index_partial.html", {
-                "rooms": rooms
-            })
-
-    if user.role.role == "investor":
-        return render(request, "chat/investor_index.html", {
-            "startups": startups,
-            "rooms": rooms,
-        })
+            },
+        )
     elif user.role.role == "startup":
-        return render(request, "chat/startup_index.html", {
-            "rooms": rooms
-        })
+        return render(request, "chat/startup_index.html", {"rooms": rooms})
 
 
 def room(request, room_id):
@@ -91,7 +101,7 @@ def room(request, room_id):
     except Room.DoesNotExist:
         raise Http404("Room not found")
 
-    if str(request.user.id) not in [p['id'] for p in room.participants]:
+    if str(request.user.id) not in [p["id"] for p in room.participants]:
         raise Http404("You are not a participant in this room.")
 
     other_participant = None
@@ -100,19 +110,12 @@ def room(request, room_id):
             other_participant = participant
             break
 
-    messages = Message.objects.filter(room=room).order_by('-created_at')
-
     context = {
         "room": room,
-        "messages": messages,
         "user": request.user,
         "other_participant": other_participant,
     }
-
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "chat/room_partial.html", context)
-    else:
-        return render(request, "chat/room.html", context)
+    return render(request, "chat/room.html", context)
 
 
 def serialize_user(user):
@@ -124,6 +127,7 @@ def serialize_user(user):
     }
 
 
+@require_http_methods(["GET"])
 def start_conversation(request, other_user_id):
     user = request.user
     other_user = get_object_or_404(User, id=other_user_id)
@@ -137,12 +141,5 @@ def start_conversation(request, other_user_id):
             participants=[serialize_user(user), serialize_user(other_user)],
         )
         room.save()
-
-        msg = Message(
-            room=room,
-            sender_id=str(user.id),
-            text="👋 Hi!",
-        )
-        msg.save()
 
     return redirect("room", room_id=room.id)
