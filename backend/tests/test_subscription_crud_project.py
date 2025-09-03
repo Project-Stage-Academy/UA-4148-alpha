@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from projects.models import StartupProject, Subscription
 from profiles.models import StartupProfile, InvestorProfile
 from unittest.mock import patch, AsyncMock
-
+from decimal import Decimal
 
 User = get_user_model()
 
@@ -19,14 +19,12 @@ def api_client():
 @pytest.fixture
 def startup_role(db):
     from users.models import UserRole
-
     return UserRole.objects.get_or_create(role="startup")[0]
 
 
 @pytest.fixture
 def investor_role(db):
     from users.models import UserRole
-
     return UserRole.objects.get_or_create(role="investor")[0]
 
 
@@ -57,20 +55,20 @@ def startup_profile(db, user):
 
 @pytest.fixture
 def investor_profile(db, user2):
-    profile = InvestorProfile.objects.create(user=user2, company_name="Investor Inc.")
-    return profile
+    return InvestorProfile.objects.create(user=user2, company_name="Investor Inc.")
 
 
 @pytest.fixture
 def project(db, user, startup_profile):
+    # Вказуємо owner, бо поле NOT NULL
     return StartupProject.objects.create(
         subject="Test Project",
         idea="Some idea",
         description="Description",
-        owner=user,
+        owner=user,  # обов’язково
         startup=startup_profile,
         investment_needed=True,
-        funding_goal=100000.00,
+        funding_goal=Decimal("100000.00"),
     )
 
 
@@ -87,7 +85,6 @@ def test_create_project(api_client, user, startup_profile):
         "funding_goal": "50000.00",
     }
     response = api_client.post(url, data)
-    print("RESPONSE DATA:", response.data)
     assert response.status_code == status.HTTP_201_CREATED
     assert response.data["subject"] == "New Project"
     assert response.data["owner"] == user.id
@@ -105,7 +102,6 @@ def test_list_projects(api_client, user, project):
 @pytest.mark.django_db
 @patch("projects.views.get_channel_layer")
 def test_update_project(mock_get_channel_layer, api_client, user, project):
-    # Mock a channel_layer with an async group_send
     mock_channel_layer = AsyncMock()
     mock_get_channel_layer.return_value = mock_channel_layer
 
@@ -113,9 +109,9 @@ def test_update_project(mock_get_channel_layer, api_client, user, project):
     url = reverse("project-update-project", args=[project.id])
     data = {"subject": "Updated Project"}
     response = api_client.post(url, data)
-
     assert response.status_code == 200
-    # Optionally assert group_send was called
+
+    # Перевіряємо, що асинхронний виклик group_send викликався
     mock_channel_layer.group_send.assert_awaited()
 
 
@@ -132,9 +128,8 @@ def test_delete_project(api_client, user, project):
 def test_subscribe_project(api_client, user2, investor_profile, project):
     api_client.force_authenticate(user=user2)
     url = reverse("project-subscribe", args=[project.id])
-    data = {"share": 20000.00}
+    data = {"share": "20000.00"}  # передаємо як строку або Decimal
     response = api_client.post(url, data)
-    print("RESPONSE DATA:", response.data)
     assert response.status_code == status.HTTP_201_CREATED
     assert Subscription.objects.filter(
         project=project, investor=investor_profile
