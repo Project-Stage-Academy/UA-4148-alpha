@@ -96,7 +96,13 @@ def startup_project(db, investor_user):
         user=investor_user, company_name="Test Startup"
     )
     return StartupProject.objects.create(
-        subject="Old Project", idea="Old Idea", startup=startup
+        subject="Old Project",
+        idea="Old Idea",
+        description="Some description",
+        owner=investor_user,
+        startup=startup,
+        investment_needed=True,
+        funding_goal=50000,
     )
 
 
