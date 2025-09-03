@@ -31,21 +31,7 @@
   {% endif %}
 </div>
 
-<script>
-  document.getElementById("logout-btn")?.addEventListener("click", async () => {
-  try {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-
-    await fetch("/chat/?force_logout=1");
-
-  } catch (err) {
-    console.warn("Logout error:", err);
-  } finally {
-    window.location.href = "/chat/login/";
-  }
-});
-</script>
+<script type="module" src="{% static 'js/chat-auth.js' %}"></script>
 
 </body>
 </html>

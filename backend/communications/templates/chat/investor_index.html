@@ -5,7 +5,6 @@
   <title>Conversations</title>
   {% load static chat_extras %}
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
-<!--  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6"></script>-->
 </head>
 <body>
 
@@ -16,7 +15,6 @@
 <div id="main-container">
   <h1>Choose a Startup to start conversation with:</h1>
 
-<!--  {% load chat_extras %}-->
   <ul>
     {% for s in startups %}
     <li>
@@ -39,21 +37,7 @@
   </ul>
 </div>
 
-<script>
-  document.getElementById("logout-btn")?.addEventListener("click", async () => {
-  try {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-
-    await fetch("/chat/?force_logout=1");
-
-  } catch (err) {
-    console.warn("Logout error:", err);
-  } finally {
-    window.location.href = "/chat/login/";
-  }
-});
-</script>
+<script type="module" src="{% static 'js/chat-auth.js' %}"></script>
 
 </body>
 </html>
