@@ -2,7 +2,7 @@ from rest_framework import status, viewsets, generics, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied, NotFound
+from rest_framework.exceptions import PermissionDenied
 from django.db.models import F
 from django.db import transaction
 
@@ -124,7 +124,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer = ProjectSerializer(project)
         
         if request.method == "DELETE":
-            return Repsonse(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {
                 "message": f"Project {project.id} has been removed from your saved list.",
@@ -212,6 +212,11 @@ class SavedProjectsList(generics.ListAPIView):
     """
     GET /api/investor/saved-projects/
     Forms a list of projects that the current investor has saved.
+    - search: GET /api/investor/saved-projects/?search=AI;
+    - ordering: GET /api/investor/saved-projects/?ordering=funding_goal.
+    
+    Requires authentication and investor role.
+    Response: JSON list of saved projects.
     """
     
     serializer_class = ProjectSerializer
@@ -221,4 +226,14 @@ class SavedProjectsList(generics.ListAPIView):
     ordering_fields = ["created_at", "views_count", "funding_goal"]
     ordering = ["-created_at"]
     
-    
+    def get_queryset(self):
+        user = self.request.user
+        investor_profile = getattr(user, "investorprofile", None)
+        
+        if not investor_profile:
+            raise PermissionDenied("Investor profile not found for this user.")
+        
+        if not getattr(investor_profile, "is_active", True):
+            raise PermissionDenied("Account of user is not active.")
+        
+        return investor_profile.saved_projects.all()                       
