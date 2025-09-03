@@ -42,11 +42,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
-        """Creation a project is automatically link it to a startup"""
         startup_profile = getattr(self.request.user, "startupprofile", None)
         if not startup_profile:
-            raise Exception("Startup profile not found for this user.")
-        serializer.save(startup=startup_profile)
+            startup_id = self.request.data.get("startup")
+            if startup_id:
+                from .models import StartupProfile
+                startup_profile = StartupProfile.objects.get(pk=startup_id)
+            else:
+                raise Exception("Startup profile not found for this user.")
+        serializer.save(owner=self.request.user, startup=startup_profile)
+
     
         
     def list(self, request, *args, **kwargs):
