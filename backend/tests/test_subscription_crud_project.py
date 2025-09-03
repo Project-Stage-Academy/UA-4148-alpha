@@ -113,7 +113,6 @@ def test_update_project(mock_get_channel_layer, api_client, user, project):
     response = api_client.post(url, data)
     assert response.status_code == 200
 
-    # Перевіряємо, що асинхронний виклик group_send викликався
     mock_channel_layer.group_send.assert_awaited()
 
 
@@ -130,7 +129,7 @@ def test_delete_project(api_client, user, project):
 def test_subscribe_project(api_client, user2, investor_profile, project):
     api_client.force_authenticate(user=user2)
     url = reverse("project-subscribe", args=[project.id])
-    data = {"share": "20000.00"}  # передаємо як строку або Decimal
+    data = {"share": "20000.00"}
     response = api_client.post(url, data)
     assert response.status_code == status.HTTP_201_CREATED
     assert Subscription.objects.filter(
