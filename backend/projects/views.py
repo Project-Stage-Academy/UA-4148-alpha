@@ -30,7 +30,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    search_fields = ["subject", "idea", "description"]
+    search_fields = ["subject", "idea", "description", "startup__company_name"]
     ordering_fields = ["created_at", "views_count", "funding_goal"]
 
     def get_permissions(self):
@@ -231,7 +231,7 @@ class SavedProjectsList(generics.ListAPIView):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    search_fields = ["subject", "idea", "description"]
+    search_fields = ["subject", "idea", "description", "startup__company_name"]
     ordering_fields = ["created_at", "views_count", "funding_goal"]
     ordering = ["-created_at"]
 
