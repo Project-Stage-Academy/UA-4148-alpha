@@ -52,10 +52,11 @@ function initChatRoom() {
 
   socket.onopen = () => {
     console.log("🔌 WS connected");
-    console.log("📡 WS opened - sending history request");
     messagesContainer.dataset.loading = "true";
     socket.send(JSON.stringify({ type: "history", offset }));
-    markVisibleMessagesAsRead();
+    requestAnimationFrame(() => {
+      markVisibleMessagesAsRead();
+    });
     messageInput.focus();
   };
 
@@ -85,8 +86,8 @@ function initChatRoom() {
 
     if (data.type === "read") {
       data.message_ids.forEach(msgId => {
-        const el = document.querySelector(`.message[data-message-id="${msgId}"] .read-status`);
-        if (el) el.textContent = "✅";
+        const msgDiv = document.querySelector(`.message[data-message-id="${msgId}"] .read-status`);
+        if (msgDiv) msgDiv.textContent = "✅";
       });
     }
 
@@ -100,6 +101,9 @@ function initChatRoom() {
       messagesContainer.dataset.offset = offset;
       messagesContainer.scrollTop = messagesContainer.scrollHeight - prevHeight;
       messagesContainer.dataset.loading = "";
+      requestAnimationFrame(() => {
+          markVisibleMessagesAsRead();
+      });
     }
   };
 

@@ -16,6 +16,7 @@ export function renderMessage(message, userId) {
   div.className = "message";
   div.dataset.messageId = id;
   div.dataset.senderId = sender_id;
+  div.dataset.read = is_read ? "true" : "false";
 
   div.innerHTML = `<strong>${escapeHTML(name)}</strong>
                    <em style="font-size:0.8em;">(${escapeHTML(timeStr)})</em>:

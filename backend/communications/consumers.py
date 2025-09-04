@@ -145,7 +145,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    "type": "messages_read",
+                    "type": "read",
                     "user_id": str(self.user.id),
                     "message_ids": updated,
                 },
@@ -155,7 +155,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if msg_type == "history":
             offset = max(int(data.get("offset", 0)), 0)
             messages = await get_message_history(self.room, offset=offset)
-            print("Sending history to", self.user.id, "with", len(messages), "messages")
             await self.send(
                 text_data=json.dumps({"type": "history", "messages": messages})
             )
@@ -195,7 +194,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
         )
 
-    async def messages_read(self, event):
+    async def read(self, event):
         await self.send(
             text_data=json.dumps(
                 {
