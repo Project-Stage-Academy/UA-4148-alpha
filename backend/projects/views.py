@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,34 +8,53 @@ from django.db import transaction
 from profiles.models import InvestorProfile
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-
+from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import ProjectSerializer, SubscriptionSerializer
 from .models import StartupProject, Subscription, ProjectRevision
-from .permissions import IsInvestor, IsStartup
+from .permissions import IsStartup
+from django.shortcuts import get_object_or_404
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
     """ViewSet for listing, retrieving, and subscribing to projects."""
 
-    permission_classes = [IsAuthenticated, IsInvestor]
+    permission_classes = [IsAuthenticated]
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ["subject"]
+    search_fields = ["subject"]
 
     def get_permissions(self):
         if self.action in ["create"]:
             permission_classes = [IsAuthenticated, IsStartup]
         elif self.action in ["list", "retrieve", "save", "unsave"]:
-            permission_classes = [IsAuthenticated, IsInvestor]
+            permission_classes = [IsAuthenticated]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
-        """Creation a project is automatically link it to a startup"""
         startup_profile = getattr(self.request.user, "startupprofile", None)
         if not startup_profile:
-            raise Exception("Startup profile not found for this user.")
-        serializer.save(startup=startup_profile)
+            startup_id = self.request.data.get("startup")
+            if startup_id:
+                from .models import StartupProfile
+
+                startup_profile = StartupProfile.objects.get(pk=startup_id)
+            else:
+                raise Exception("Startup profile not found for this user.")
+        serializer.save(owner=self.request.user, startup=startup_profile)
 
     def list(self, request, *args, **kwargs):
         """Viewing projects by investors"""
@@ -122,14 +141,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk=None):
+        project = get_object_or_404(StartupProject, pk=pk)
+
         try:
-            project = self.get_object()
-        except StartupProject.DoesNotExist:
+            from profiles.models import InvestorProfile
+
+            investor = InvestorProfile.objects.get(user=request.user)
+        except InvestorProfile.DoesNotExist:
             return Response(
-                {"detail": "Project not found."}, status=status.HTTP_404_NOT_FOUND
+                {"error": "User is not an investor."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = SubscriptionSerializer(data=request.data)
+        if Subscription.objects.filter(project=project, investor=investor).exists():
+            return Response(
+                {"error": "Already subscribed"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = SubscriptionSerializer(
+            data=request.data, context={"project": project}
+        )
         if serializer.is_valid():
             share = serializer.validated_data["share"]
 
@@ -138,16 +168,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
                     {"error": "Project has no funding goal set."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
             if project.remaining_funding() < share:
                 return Response(
                     {"error": "Funding goal exceeded"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            subscription = serializer.save(
-                investor=request.user.investorprofile, project=project
-            )
+            subscription = serializer.save(investor=investor, project=project)
             return Response(
                 SubscriptionSerializer(subscription).data,
                 status=status.HTTP_201_CREATED,
