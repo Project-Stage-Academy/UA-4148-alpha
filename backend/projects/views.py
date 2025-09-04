@@ -42,8 +42,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer.save(startup=startup_profile)
 
     def list(self, request, *args, **kwargs):
-      """Viewing projects by investors"""
-
+        """Viewing projects by investors"""
         logger.info(f"Project list request from user ID: {request.user.id}")
         try:
             queryset = self.get_queryset().order_by("-created_at")
