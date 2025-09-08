@@ -1,3 +1,4 @@
+
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, get_user_model, login
@@ -7,7 +8,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .mongo_models import Room, Message
 from .utils.generate_room_name import generate_room_name
 
+import logging
+
 User = get_user_model()
+
+# Get logger for this module
+logger = logging.getLogger(__name__)
 
 
 def login_page(request):
