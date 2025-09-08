@@ -1,4 +1,3 @@
-
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, get_user_model, login
