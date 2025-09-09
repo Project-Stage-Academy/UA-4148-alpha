@@ -163,11 +163,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer = ProjectSerializer(project)
 
         if request.method == "DELETE":
-            return Response({
-                "message": f"Project {project.id} has been deleted from your saved list.",
-                "project": serializer.data,
-            },
-            status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "message": f"Project {project.id} has been deleted from your saved list.",
+                    "project": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
         return Response(
             {
                 "message": f"Project {project.id} has been removed from your saved list.",
