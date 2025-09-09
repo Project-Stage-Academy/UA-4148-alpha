@@ -1,10 +1,13 @@
 import logging
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, generics, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from django.db.models import F
 from django.db import transaction
+
+from django_filters.rest_framework import DjangoFilterBackend
 
 from profiles.models import InvestorProfile
 from asgiref.sync import async_to_sync
@@ -24,6 +27,15 @@ class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsInvestor]
     queryset = StartupProject.objects.all()
     serializer_class = ProjectSerializer
+
+    # Filters for base List
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["subject", "idea", "description", "startup__company_name"]
+    ordering_fields = ["created_at", "views_count", "funding_goal"]
 
     def get_permissions(self):
         if self.action in ["create"]:
@@ -128,10 +140,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    # Unfollow" to remove a project from saved
-    @action(detail=True, methods=["post"], url_path="unsave")
+    # Unfollow / delete to remove a project from saved
+    @action(detail=True, methods=["post", "delete"], url_path="unsave")
     def unsave(self, request, pk=None):
-        """Allow an authenticated investor to unfollow (remove) a startup project."""
+        """
+        Allow an authenticated investor to unfollow (remove) a startup project.
+        supports POST /api/projects/{pk}/unsave/ and DELETE /api/projects/{pk}/unsave/
+        """
 
         investor_profile = getattr(request.user, "investorprofile", None)
         if not investor_profile:
@@ -147,6 +162,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         serializer = ProjectSerializer(project)
 
+        if request.method == "DELETE":
+            return Response(
+                {
+                    "message": f"Project {project.id} has been deleted from your saved list.",
+                    "project": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
         return Response(
             {
                 "message": f"Project {project.id} has been removed from your saved list.",
@@ -259,3 +282,38 @@ class ProjectViewSet(viewsets.ModelViewSet):
             f"Project update failed with validation errors for user ID {request.user.id} and project ID {pk}: {serializer.errors}"
         )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SavedProjectsList(generics.ListAPIView):
+    """
+    GET /api/investor/saved-projects/
+    Forms a list of projects that the current investor has saved.
+    - search: GET /api/investor/saved-projects/?search=AI;
+    - ordering: GET /api/investor/saved-projects/?ordering=funding_goal.
+
+    Requires authentication and investor role.
+    Response: JSON list of saved projects.
+    """
+
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated, IsInvestor]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["subject", "idea", "description", "startup__company_name"]
+    ordering_fields = ["created_at", "views_count", "funding_goal"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        user = self.request.user
+        investor_profile = getattr(user, "investorprofile", None)
+
+        if not investor_profile:
+            raise PermissionDenied("Investor profile not found for this user.")
+
+        if not getattr(investor_profile, "is_active", True):
+            raise PermissionDenied("Account of user is not active.")
+
+        return investor_profile.saved_projects.all()
