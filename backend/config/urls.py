@@ -40,7 +40,6 @@ api_urlpatterns = [
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("projects.urls")),
     path("api/", include(api_urlpatterns)),
     path(
         "swagger<format>/", SchemaView.without_ui(cache_timeout=0), name="schema-json"
@@ -52,6 +51,7 @@ urlpatterns = [
     ),
     path("redoc/", SchemaView.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     path("chat/", include("communications.urls")),
+    path("", include("projects.urls")),
 ]
 
 if settings.DEBUG:

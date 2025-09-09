@@ -1,146 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <title>Chat Room</title>
+  <meta charset="UTF-8" />
+  <title>Conversation</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
 </head>
-<body>
-    <div id="chat-log" style="width: 100%; height: 300px; overflow-y: scroll; white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
-    <textarea id="chat-message-input" rows="3" cols="100" placeholder="Type a message..."></textarea><br>
-    <input id="chat-message-submit" type="button" value="Send" disabled>
+<body
+  id="chat-root"
+  data-user-id="{{ user.id }}"
+  data-other-user-id="{{ other_participant.id }}"
+  data-room-id="{{ room.id }}">
 
-    {{ other_user_id|json_script:"other-user-id" }}
-    {{ current_user_id|json_script:"current-user-id" }}
+  <h2>Conversation with {{ other_participant.first_name }} {{ other_participant.last_name }}</h2>
 
-    <script>
-        let currentUserId = null;
-        let otherUserId = null;
-        let chatSocket = null;
-        let reconnectDelay = 2000;
-        let hasFetchedHistory = false;
+  <div class="button-bar">
+    <button id="go-back-btn" class="button">← Back to Conversations</button>
+  </div>
 
-        try {
-            otherUserId = JSON.parse(document.getElementById('other-user-id').textContent);
-            currentUserId = JSON.parse(document.getElementById('current-user-id').textContent);
-            console.log("Loaded currentUserId:", currentUserId);
-        } catch (err) {
-            console.error("Error parsing user IDs:", err);
-        }
+  <div id="messages" data-offset="0" data-loading="true">
+  </div>
 
-        const chatLog = document.querySelector('#chat-log');
-        const messageInputDom = document.querySelector('#chat-message-input');
-        const messageSubmitButton = document.querySelector('#chat-message-submit');
+  <form id="message-form">
+    <textarea id="message-input" rows="2" placeholder="Type a message..." required autocomplete="off"></textarea>
+    <button type="submit" class="button">Send</button>
+  </form>
 
-        function appendLog(text, cssClass = "") {
-            const newLine = document.createElement("div");
-            newLine.textContent = text;
-            if (cssClass) newLine.classList.add(cssClass);
-            chatLog.appendChild(newLine);
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
-
-        function bindMessageEvents() {
-            messageInputDom.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    messageSubmitButton.click();
-                }
-            });
-
-            messageSubmitButton.onclick = function () {
-                const message = messageInputDom.value.trim();
-                if (!message || chatSocket.readyState !== WebSocket.OPEN) return;
-
-                chatSocket.send(JSON.stringify({ type: "message", message }));
-                messageInputDom.value = '';
-            };
-        }
-
-        function getDateTime(timestamp) {
-            try {
-                return new Date(timestamp).toLocaleString();
-            } catch {
-                return "";
-            }
-        }
-
-        function renderMessage(msg) {
-            const name = `${msg.first_name} ${msg.last_name}`;
-            const time = getDateTime(msg.timestamp);
-
-            if (String(msg.sender_id) === String(currentUserId)) {
-                appendLog(`Me: ${msg.text}    ${time}`, "my-message");
-            } else {
-                appendLog(`${name}: ${msg.text}    ${time}`, "other-message");
-            }
-        }
-
-        function initChatSocket() {
-            if (!otherUserId) {
-                alert("Missing user ID for chat.");
-                return;
-            }
-
-            const token = localStorage.getItem("access_token");
-            if (!token) {
-                alert("No access token found. Please login first.");
-                return;
-            }
-
-            const socketUrl = `ws://${window.location.host}/ws/chat/${otherUserId}/?token=${token}`;
-            chatSocket = new WebSocket(socketUrl);
-
-            chatSocket.onopen = () => {
-                reconnectDelay = 2000;
-                appendLog("[Connected to chat]");
-                messageSubmitButton.disabled = false;
-                bindMessageEvents();
-            };
-
-            chatSocket.onmessage = (e) => {
-                try {
-                    const data = JSON.parse(e.data);
-
-                    switch (data.type) {
-                        case "message":
-                            renderMessage(data);
-                            break;
-                        case "history":
-                            if (!hasFetchedHistory) {
-                                data.messages.forEach(renderMessage);
-                                hasFetchedHistory = true;
-                            }
-                            break;
-                        case "read":
-                            console.log("Read messages:", data.message_ids);
-                            break;
-                        case "error":
-                            appendLog(`[Error] ${data.error}`);
-                            break;
-                        default:
-                            console.warn("Unknown message type:", data);
-                    }
-                } catch (err) {
-                    console.error("Error parsing WebSocket message:", err);
-                }
-            };
-
-            chatSocket.onclose = () => {
-                hasFetchedHistory = false;
-                messageSubmitButton.disabled = true;
-                appendLog(`[Disconnected, retrying in ${reconnectDelay / 1000} seconds...]`);
-                setTimeout(() => {
-                    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
-                    initChatSocket();
-                }, reconnectDelay);
-            };
-
-            chatSocket.onerror = (e) => {
-                console.error("WebSocket error", e);
-                chatSocket.close();
-            };
-        }
-        initChatSocket();
-    </script>
+<script type="module" src="{% static 'js/chat-room.js' %}"></script>
 </body>
 </html>
