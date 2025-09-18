@@ -80,3 +80,12 @@ class Message(Document):
     text = StringField(required=True)
     timestamp = DateTimeField(default=datetime.datetime.utcnow)
     is_read = BooleanField(default=False)
+
+
+class MongoNotification(Document):
+    meta = {"collection": "notifications"}
+
+    message_id = StringField(required=True)
+    room_name = StringField(required=True)
+    sender_name = StringField(required=True)
+    timestamp = DateTimeField(default=datetime.datetime.utcnow)

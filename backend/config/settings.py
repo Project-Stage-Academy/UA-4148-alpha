@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "projects",
     "communications",
     "dashboard",
+"communications.apps.CommunicationsConfig",
 ]
 
 REST_FRAMEWORK = {
