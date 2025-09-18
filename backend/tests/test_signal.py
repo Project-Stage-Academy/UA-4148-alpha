@@ -1,6 +1,7 @@
 from django.test import TestCase
 from communications.mongo_models import Message, Room, MongoNotification
 
+
 class MessageSignalTestCase(TestCase):
     def setUp(self):
         self.room = Room.objects.create(name="test_room")
@@ -11,6 +12,6 @@ class MessageSignalTestCase(TestCase):
             sender_id="1",
             sender_first_name="Julia",
             sender_last_name="V",
-            text="Test"
+            text="Test",
         )
         self.assertEqual(MongoNotification.objects.count(), 1)

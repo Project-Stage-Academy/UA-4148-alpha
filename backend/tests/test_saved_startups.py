@@ -15,14 +15,18 @@ def api_client():
 
 @pytest.fixture
 def investor_user(db):
-    user = UserProfile.objects.create_user(username="investor", password="testpass", role="investor")
+    user = UserProfile.objects.create_user(
+        username="investor", password="testpass", role="investor"
+    )
     InvestorProfile.objects.create(user=user)
     return user
 
 
 @pytest.fixture
 def startup_user(db):
-    user = UserProfile.objects.create_user(username="startup", password="testpass", role="startup")
+    user = UserProfile.objects.create_user(
+        username="startup", password="testpass", role="startup"
+    )
     StartupProfile.objects.create(user=user, company_name="Test Company")
     return user
 
@@ -38,13 +42,17 @@ def project(startup_user):
         funding_goal=10000,
     )
 
+
 @pytest.mark.django_db
 def test_investor_can_list_saved_startups(api_client, investor_user, project):
     investor_profile = investor_user.investorprofile
     investor_profile.saved_projects.add(project)
 
     api_client.force_authenticate(user=investor_user)
-    url = reverse("saved-startups", kwargs={"user_id": investor_user.id, "investor_id": investor_profile.id})
+    url = reverse(
+        "saved-startups",
+        kwargs={"user_id": investor_user.id, "investor_id": investor_profile.id},
+    )
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -55,10 +63,13 @@ def test_investor_can_list_saved_startups(api_client, investor_user, project):
 @pytest.mark.django_db
 def test_non_investor_cannot_list_saved_startups(api_client, startup_user):
     api_client.force_authenticate(user=startup_user)
-    url = reverse("saved-startups", kwargs={"user_id": startup_user.id, "investor_id": 999})
+    url = reverse(
+        "saved-startups", kwargs={"user_id": startup_user.id, "investor_id": 999}
+    )
     response = api_client.get(url)
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
 
 @pytest.mark.django_db
 def test_investor_can_unsave_startup(api_client, investor_user, project):
@@ -66,7 +77,9 @@ def test_investor_can_unsave_startup(api_client, investor_user, project):
     investor_profile.saved_projects.add(project)
 
     api_client.force_authenticate(user=investor_user)
-    url = reverse("project-unsave", kwargs={"startup_id": project.id})  # adapt name if different
+    url = reverse(
+        "project-unsave", kwargs={"startup_id": project.id}
+    )  # adapt name if different
     response = api_client.post(url)
 
     assert response.status_code == status.HTTP_200_OK
