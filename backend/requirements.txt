@@ -79,3 +79,4 @@ daphne==4.2.1
 channels-redis==4.3.0
 Faker==37.5.3
 django-filter==2.4.0
+blinker==1.9.0
