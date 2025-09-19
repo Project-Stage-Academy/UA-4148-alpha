@@ -1,8 +1,10 @@
+import pytest
 from django.test import TestCase
 import mongoengine
 from communications.mongo_models import Message, Room, MongoNotification
 
 
+@pytest.mark.django_db
 class MessageSignalTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
