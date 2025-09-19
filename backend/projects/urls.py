@@ -18,9 +18,4 @@ urlpatterns = [
         SavedProjectsList.as_view(),
         name="user-investor-saved-startups",
     ),
-    path(
-        "startups/<int:startup_id>/unsave/",
-        ProjectViewSet.as_view(),
-        name="startup-unsave",
-    ),
 ]
