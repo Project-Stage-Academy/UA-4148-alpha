@@ -3,10 +3,12 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from users.models import UserProfile
+from users.models import UserProfile, UserRole
 from profiles.models import InvestorProfile, StartupProfile
 from projects.models import StartupProject
 
+investor_role = UserRole.objects.get_or_create(name="investor")[0]
+startup_role = UserRole.objects.get_or_create(name="startup")[0]
 
 @pytest.fixture
 def api_client():
@@ -16,7 +18,7 @@ def api_client():
 @pytest.fixture
 def investor_user(db):
     user = UserProfile.objects.create_user(
-        username="investor", password="testpass", role="investor"
+        username="investor", password="testpass", role=investor_role
     )
     InvestorProfile.objects.create(user=user)
     return user
@@ -25,7 +27,7 @@ def investor_user(db):
 @pytest.fixture
 def startup_user(db):
     user = UserProfile.objects.create_user(
-        username="startup", password="testpass", role="startup"
+        username="startup", password="testpass", role=startup_role
     )
     StartupProfile.objects.create(user=user, company_name="Test Company")
     return user
