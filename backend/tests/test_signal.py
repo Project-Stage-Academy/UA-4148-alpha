@@ -2,14 +2,12 @@ from django.test import TestCase
 import mongoengine
 from communications.mongo_models import Message, Room, MongoNotification
 
+
 class MessageSignalTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        mongoengine.connect(
-            db="test_db",
-            host="mongomock://localhost"
-        )
+        mongoengine.connect(db="test_db", host="mongomock://localhost")
 
     @classmethod
     def tearDownClass(cls):

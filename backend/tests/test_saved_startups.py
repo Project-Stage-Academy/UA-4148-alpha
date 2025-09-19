@@ -10,6 +10,7 @@ from projects.models import StartupProject
 investor_role = UserRole.objects.get_or_create(name="investor")[0]
 startup_role = UserRole.objects.get_or_create(name="startup")[0]
 
+
 @pytest.fixture
 def api_client():
     return APIClient()
