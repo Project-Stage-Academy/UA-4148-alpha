@@ -94,7 +94,7 @@ def test_investor_can_unsave_startup(api_client, investor_user, project):
 
     api_client.force_authenticate(user=investor_user)
     url = reverse(
-        "project-unsave", kwargs={"startup_id": project.id}
+        "project-unsave", kwargs={"pk": project.id}
     )  # adapt name if different
     response = api_client.post(url)
 
@@ -105,7 +105,7 @@ def test_investor_can_unsave_startup(api_client, investor_user, project):
 @pytest.mark.django_db
 def test_startup_cannot_unsave_startup(api_client, startup_user, project):
     api_client.force_authenticate(user=startup_user)
-    url = reverse("project-unsave", kwargs={"startup_id": project.id})
+    url = reverse("project-unsave", kwargs={"pk": project.id})
     response = api_client.post(url)
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
