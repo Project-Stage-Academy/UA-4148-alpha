@@ -7,8 +7,17 @@ from users.models import UserProfile, UserRole
 from profiles.models import InvestorProfile, StartupProfile
 from projects.models import StartupProject
 
-investor_role = UserRole.objects.get_or_create(role="investor")[0]
-startup_role = UserRole.objects.get_or_create(role="startup")[0]
+
+@pytest.fixture
+def investor_role(db):
+    role, _ = UserRole.objects.get_or_create(role="investor")
+    return role
+
+
+@pytest.fixture
+def startup_role(db):
+    role, _ = UserRole.objects.get_or_create(role="startup")
+    return role
 
 
 @pytest.fixture
