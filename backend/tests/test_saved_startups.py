@@ -26,16 +26,19 @@ def api_client():
 
 
 @pytest.fixture
-def investor_user(db):
+def investor_user(db, investor_role):
     user = UserProfile.objects.create_user(
-        username="investor", password="testpass", role=investor_role
+        username="investor",
+        email="investor@example.com",
+        password="testpassword",
+        role=investor_role,
     )
-    InvestorProfile.objects.create(user=user)
+    InvestorProfile.objects.get_or_create(user=user)
     return user
 
 
 @pytest.fixture
-def startup_user(db):
+def startup_user(db, startup_role):
     user = UserProfile.objects.create_user(
         username="startup", password="testpass", role=startup_role
     )
