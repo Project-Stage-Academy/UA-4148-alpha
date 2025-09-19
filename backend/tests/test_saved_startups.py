@@ -48,7 +48,7 @@ def startup_user(db, startup_role):
 
 @pytest.fixture
 def project(startup_user):
-    startup_profile = startup_user.startupprofile
+    startup_profile = startup_user.startups.first()
     return StartupProject.objects.create(
         startup=startup_profile,
         subject="AI Project",
@@ -65,7 +65,7 @@ def test_investor_can_list_saved_startups(api_client, investor_user, project):
 
     api_client.force_authenticate(user=investor_user)
     url = reverse(
-        "saved-startups",
+        "user-investor-saved-startups",
         kwargs={"user_id": investor_user.id, "investor_id": investor_profile.id},
     )
     response = api_client.get(url)
@@ -79,7 +79,8 @@ def test_investor_can_list_saved_startups(api_client, investor_user, project):
 def test_non_investor_cannot_list_saved_startups(api_client, startup_user):
     api_client.force_authenticate(user=startup_user)
     url = reverse(
-        "saved-startups", kwargs={"user_id": startup_user.id, "investor_id": 999}
+        "user-investor-saved-startups",
+        kwargs={"user_id": startup_user.id, "investor_id": 999},
     )
     response = api_client.get(url)
 
